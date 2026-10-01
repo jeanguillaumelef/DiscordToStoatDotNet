@@ -83,9 +83,10 @@ When editing an adapter project (`DiscordRepository`, `StoatRepository`, ...):
 ## Tooling
 
 - Tests: xUnit, run via `dotnet test`. Never add NUnit, MSTest, or another test framework.
-- All new or changed tests must be written by delegating to the `test-writer` agent (Agent tool,
-  `subagent_type: test-writer`), not written directly in the main session. The agent runs
-  `dotnet test` itself; after it returns, confirm with a `dotnet test` run.
+- New or changed tests are written either by delegating to the `test-writer` agent (Agent tool,
+  `subagent_type: test-writer`), or by the test-quality skills (`test-gap-analysis`, `test-tagging`)
+  when the user explicitly asks for them; otherwise do not write tests directly in the main
+  session. After either, confirm with a `dotnet test` run (the `test-writer` agent also runs it itself).
 - Type-check as part of the build (the C# compiler fails `dotnet build` on type and nullability
   errors); there is no separate typecheck step.
 - Format: `dotnet format`. Run it only through the command that exists for this repo — don't wire
