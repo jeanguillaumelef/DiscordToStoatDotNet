@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="Domain\Domain.csproj" />
+    <ProjectReference Include="DiscordRepository\DiscordRepository.csproj" />
+    <ProjectReference Include="StoatRepository\StoatRepository.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>d3f2a6e1-8b8b-4d2a-9b7b-8b7e6a3f2c9e</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Sibling project folders live under this same directory; exclude their sources from this project's default glob. -->
+    <Compile Remove="Domain/**/*.cs" />
+    <Compile Remove="Domain.Tests/**/*.cs" />
+    <Compile Remove="DiscordRepository/**/*.cs" />
+    <Compile Remove="StoatRepository/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>
