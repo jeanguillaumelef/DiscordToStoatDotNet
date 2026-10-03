@@ -1,0 +1,3 @@
+namespace Domain;
+
+public sealed record StoatSnapshot(IReadOnlyList<StoatCategory> Categories);
