@@ -5,3 +5,7 @@ The Bridge records each Channel Link on the Stoat side: the Discord ID is the fi
 ## Considered Options
 
 A local database or state file would be more robust, because an admin editing a description or title cannot break a Link. We accepted that risk to keep the Bridge stateless. Reconcile treats Discord as the source of truth, so a broken Link is repaired by creating a new Mirror.
+
+## Link format
+
+A Mirror Category's title is `{name} [{discordId}]`: the Discord ID, in square brackets, at the very end. A title without a trailing `[digits]` carries no valid Channel Link, and Reconcile ignores that Mirror Category.

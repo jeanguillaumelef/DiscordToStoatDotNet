@@ -7,9 +7,9 @@ public class ReconcilerTests
     private static async Task<ReconcileResult> ReconcileAsync(
         FakeDiscordRepository discord, FakeStoatRepository stoat)
     {
-        var d = await discord.GetSnapshotAsync(CancellationToken.None);
-        var s = await stoat.GetSnapshotAsync(CancellationToken.None);
-        return Reconciler.Reconcile(d, s);
+        var discordSnapshot = await discord.GetSnapshotAsync(CancellationToken.None);
+        var stoatSnapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
+        return Reconciler.Reconcile(discordSnapshot, stoatSnapshot);
     }
 
     [Fact]

@@ -4,7 +4,7 @@ public static class Reconciler
 {
     public static ReconcileResult Reconcile(DiscordSnapshot discord, StoatSnapshot stoat)
     {
-        var linked = stoat.Categories
+        var mirroredDiscordCategoryIds = stoat.Categories
             .Select(c => ChannelLink.SourceIdFromCategoryTitle(c.Title))
             .OfType<string>()
             .ToHashSet();
@@ -20,7 +20,7 @@ public static class Reconciler
                 continue;
             }
 
-            if (!linked.Contains(category.Id))
+            if (!mirroredDiscordCategoryIds.Contains(category.Id))
             {
                 changes.Add(new CreateCategory(category.Id, ChannelLink.CategoryTitle(category.Name, category.Id)));
             }
