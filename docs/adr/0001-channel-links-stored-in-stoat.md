@@ -9,3 +9,5 @@ A local database or state file would be more robust, because an admin editing a 
 ## Link format
 
 A Mirror Category's title is `{name} [{discordId}]`: the Discord ID, in square brackets, at the very end. A title without a trailing `[digits]` carries no valid Channel Link, and Reconcile ignores that Mirror Category.
+
+A Mirror Channel's description carries the link as its first line: the bare Discord ID, digits only. Anything after the first line is free text. A description whose first line is not purely digits carries no valid Channel Link, and Reconcile ignores that Mirror Channel.

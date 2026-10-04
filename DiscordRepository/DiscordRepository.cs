@@ -29,7 +29,13 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             .Select(c => new DiscordCategory(c.Id.ToString(), c.Name, EveryoneCanView(guild, c)))
             .ToList();
 
-        return new DiscordSnapshot(categories);
+        var textChannels = channels
+            .OfType<RestTextChannel>()
+            .OrderBy(c => c.Position)
+            .Select(c => new DiscordTextChannel(c.Id.ToString(), c.Name, c.CategoryId?.ToString(), EveryoneCanView(guild, c)))
+            .ToList();
+
+        return new DiscordSnapshot(categories, textChannels);
     }
 
     public async ValueTask DisposeAsync()

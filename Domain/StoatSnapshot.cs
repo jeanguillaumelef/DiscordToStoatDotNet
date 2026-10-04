@@ -1,3 +1,3 @@
 namespace Domain;
 
-public sealed record StoatSnapshot(IReadOnlyList<StoatCategory> Categories);
+public sealed record StoatSnapshot(IReadOnlyList<StoatCategory> Categories, IReadOnlyList<StoatTextChannel> TextChannels);

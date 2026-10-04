@@ -15,13 +15,31 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
             .OrderBy(c => c.Position)
             .Select(c => new StoatCategory(c.Id, c.Name))
             .ToList();
-        return new StoatSnapshot(categories);
+        var textChannels = server.TextChannels
+            .Select(c => new StoatTextChannel(c.Id, c.Name, c.Description ?? string.Empty))
+            .ToList();
+        return new StoatSnapshot(categories, textChannels);
     }
 
     public async Task CreateCategoryAsync(string title, CancellationToken cancellationToken)
     {
         var server = await GetServerAsync(cancellationToken);
         await server.AddCategoryAsync(title, server.Categories.Count);
+    }
+
+    public async Task CreateTextChannelAsync(string name, string description, string? categoryId, CancellationToken cancellationToken)
+    {
+        var server = await GetServerAsync(cancellationToken);
+        var channel = await server.CreateTextChannelAsync(name, description);
+
+        if (categoryId is null)
+        {
+            return;
+        }
+
+        var category = server.Categories.FirstOrDefault(c => c.Id == categoryId)
+            ?? throw new InvalidOperationException($"Stoat category {categoryId} was not found.");
+        await category.ModifyAsync(channels: new Option<string[]>([.. category.ChannelIds, channel.Id]));
     }
 
     private async Task<Server> GetServerAsync(CancellationToken cancellationToken)

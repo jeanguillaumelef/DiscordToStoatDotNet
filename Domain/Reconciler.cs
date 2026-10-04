@@ -9,6 +9,16 @@ public static class Reconciler
             .OfType<string>()
             .ToHashSet();
 
+        var mirroredDiscordChannelIds = stoat.TextChannels
+            .Select(c => ChannelLink.SourceIdFromChannelDescription(c.Description))
+            .OfType<string>()
+            .ToHashSet();
+
+        var publicCategoryIds = discord.Categories
+            .Where(c => c.EveryoneCanView)
+            .Select(c => c.Id)
+            .ToHashSet();
+
         var changes = new List<Change>();
         var skipped = new List<SkippedItem>();
 
@@ -26,6 +36,23 @@ public static class Reconciler
             }
         }
 
+        foreach (var channel in discord.TextChannels)
+        {
+            if (!channel.EveryoneCanView)
+            {
+                skipped.Add(new SkippedItem(channel.Id, "Private channel: @everyone cannot view it"));
+                continue;
+            }
+
+            if (!mirroredDiscordChannelIds.Contains(channel.Id))
+            {
+                changes.Add(new CreateChannel(channel.Id, channel.Name, ChannelLink.ChannelDescription(channel.Id), MirroredCategoryId(channel, publicCategoryIds)));
+            }
+        }
+
         return new ReconcileResult(changes, skipped);
     }
+
+    private static string? MirroredCategoryId(DiscordTextChannel channel, HashSet<string> publicCategoryIds) =>
+        channel.CategoryId is { } categoryId && publicCategoryIds.Contains(categoryId) ? categoryId : null;
 }

@@ -132,4 +132,72 @@ public class ReconcilerTests
         Assert.Empty(result.Changes);
         Assert.Empty(result.Skipped);
     }
+
+    [Fact]
+    public async Task PublicTextChannelInMirroredCategory_ProducesCreateChannelWithLinkAsDescription()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [new DiscordCategory("111", "General", true)],
+                [new DiscordTextChannel("501", "chat", "111", true)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(
+            new Change[] { new CreateCategory("111", "General [111]"), new CreateChannel("501", "chat", "501", "111") },
+            result.Changes);
+    }
+
+    [Fact]
+    public async Task PrivateTextChannel_ProducesNoCreateAndIsSkipped()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [],
+                [new DiscordTextChannel("501", "chat", null, true), new DiscordTextChannel("502", "staff", null, false)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
+        var skipped = Assert.Single(result.Skipped);
+        Assert.Equal("502", skipped.SourceId);
+        Assert.False(string.IsNullOrWhiteSpace(skipped.Reason));
+    }
+
+    [Fact]
+    public async Task TextChannelWithValidMirrorChannel_ProducesNoCreate()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository([], [new DiscordTextChannel("501", "chat", null, true)]),
+            new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", "501\nSome topic")]));
+
+        Assert.Empty(result.Changes);
+        Assert.Empty(result.Skipped);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("chat topic")]
+    [InlineData("abc")]
+    [InlineData("Some topic\n501")]
+    [InlineData(" 501")]
+    [InlineData("502")]
+    public async Task MirrorChannelWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string description)
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository([], [new DiscordTextChannel("501", "chat", null, true)]),
+            new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", description)]));
+
+        Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
+    }
+
+    [Fact]
+    public async Task PublicChannelInPrivateCategory_IsCreatedWithoutCategory()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [new DiscordCategory("222", "Staff", false)],
+                [new DiscordTextChannel("501", "chat", "222", true)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
+    }
 }
