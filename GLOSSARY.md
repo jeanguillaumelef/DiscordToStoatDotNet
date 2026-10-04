@@ -20,6 +20,10 @@ _Avoid_: Hidden channel, restricted channel
 A Discord category that groups Source Channels.
 _Avoid_: Discord folder, group
 
+**Private Category**:
+A Source Category that `@everyone` cannot view. The Bridge mirrors it only when it holds at least one public Source Channel, so those channels can stay grouped; its name is mirrored like any other category's.
+_Avoid_: Hidden category, restricted category
+
 **Mirror Channel**:
 The Stoat text or voice channel that corresponds to one Source Channel.
 _Avoid_: Stoat channel, copy, target channel
