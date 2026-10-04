@@ -1,5 +1,6 @@
 namespace Domain;
 
+/// <summary>Pure decision logic of Reconcile: compares a Discord snapshot with a Stoat snapshot and returns the changes needed. Does no I/O.</summary>
 public static class Reconciler
 {
     public static ReconcileResult Reconcile(DiscordSnapshot discord, StoatSnapshot stoat)

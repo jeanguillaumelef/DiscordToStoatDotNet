@@ -1,5 +1,6 @@
 namespace Domain;
 
+/// <summary>Orchestrates one Reconcile: reads both snapshots through the ports, asks Reconciler for the changes, and applies them to Stoat in order (categories before channels).</summary>
 public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository stoat)
 {
     public async Task<ReconcileResult> RunAsync(CancellationToken cancellationToken)
