@@ -18,6 +18,7 @@
     <!-- Sibling project folders live under this same directory; exclude their sources from this project's default glob. -->
     <Compile Remove="Domain/**/*.cs" />
     <Compile Remove="Domain.Tests/**/*.cs" />
+    <Compile Remove="IntegrationTests/**/*.cs" />
     <Compile Remove="DiscordRepository/**/*.cs" />
     <Compile Remove="StoatRepository/**/*.cs" />
   </ItemGroup>
