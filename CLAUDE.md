@@ -14,7 +14,7 @@ known as Revolt). The long-term goal is to mirror/forward Discord activity into 
   each adapter are their own projects (see Layout).
 - Discord adapter (`DiscordRepository`) uses [Discord.Net](https://github.com/discord-net/Discord.Net)
   ([NuGet](https://www.nuget.org/packages/Discord.Net)) as its SDK.
-- Stoat adapter (`StoatRepository`) uses [StoatSharp](https://www.nuget.org/packages/StoatSharp)
+- Stoat adapter (`StoatRepository`) uses [StoatSharp](https://www.nuget.org/packages/StoatSharp) (gh repo: https://github.com/FluxpointDev/StoatSharp)
   as its SDK.
 
 ## Commands
