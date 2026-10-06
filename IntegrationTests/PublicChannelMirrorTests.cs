@@ -17,7 +17,8 @@ public class PublicChannelMirrorTests
         var guildId = ulong.Parse(settings.DiscordGuildId);
 
         // Every run gets its own name prefix, so its resources are easy to spot if a teardown ever misses one.
-        var prefix = $"it-{Guid.NewGuid():N}"[..11];
+        // Kept short: the Mirror Category title is "{name} [{discordId}]", and Stoat rejects titles over its length limit (issue #8).
+        var prefix = $"it-{Guid.NewGuid():N}"[..9];
         var ledger = new TeardownLedger();
 
         await using var discordGuild = new DiscordTestGuild(settings.DiscordBotToken, guildId);
@@ -43,7 +44,7 @@ public class PublicChannelMirrorTests
 
         async Task RunAsync()
         {
-            var sourceCategory = await discordGuild.CreateCategoryAsync($"{prefix}-category");
+            var sourceCategory = await discordGuild.CreateCategoryAsync(prefix);
             ledger.Add($"Discord category {sourceCategory.Name}", () => sourceCategory.DeleteAsync());
 
             var sourceChannel = await discordGuild.CreateTextChannelAsync($"{prefix}-channel", sourceCategory.Id);
@@ -58,7 +59,7 @@ public class PublicChannelMirrorTests
             var after = await stoat.GetSnapshotAsync(CancellationToken.None);
 
             var mirrorCategory = Assert.Single(after.Categories,
-                c => c.Title == ChannelLink.CategoryTitle($"{prefix}-category", sourceCategory.Id.ToString()));
+                c => c.Title == ChannelLink.CategoryTitle(prefix, sourceCategory.Id.ToString()));
             var mirrorChannel = Assert.Single(after.TextChannels,
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 
