@@ -1,0 +1,12 @@
+#!/bin/sh
+# Runs the unit tests, then the integration tests, before every push.
+# A failure in either suite refuses the push.
+# Enable once per clone: git config core.hooksPath .githooks
+
+set -e
+
+echo "pre-push: unit tests"
+dotnet test DiscordToStoat.sln --filter "Category!=Integration"
+
+echo "pre-push: integration tests"
+dotnet test DiscordToStoat.sln --filter "Category=Integration"
