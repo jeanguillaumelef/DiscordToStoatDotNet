@@ -44,9 +44,10 @@ Domain                       # its own project: business logic + port definition
 - Project references only flow one way: `DiscordToStoat.csproj` references `Domain` and every
   adapter project; each adapter project references only `Domain`. Adapter projects never reference
   each other, and `Domain` references nothing in this solution.
-- Tests live in a sibling test project per project under test (e.g. `Domain.Tests/`,
+- Unit Tests live in a sibling test project per project under test (e.g. `Domain.Tests/`,
   `DiscordRepository.Tests/`), referencing only the project it tests. Keeping tests in separate
   assemblies keeps test-framework references out of `Domain` and the adapter projects.
+- integration tests live in a project for the whole solution
 - Create a new project only when its first real module is written; add it to the solution file
   when it's created.
 
