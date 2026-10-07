@@ -190,14 +190,33 @@ public class ReconcilerTests
     }
 
     [Fact]
-    public async Task PublicChannelInPrivateCategory_IsCreatedWithoutCategory()
+    public async Task PublicChannelInPrivateCategory_MirrorsThePrivateCategoryAndPlacesChannelUnderIt()
     {
+        // Issue #12: a public channel under a Private Category is placed in a Mirror Category
+        // created for that Private Category, following the same naming rules as any public category.
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new DiscordCategory("222", "Staff", false)],
                 [new DiscordTextChannel("501", "chat", "222", true)]),
             new FakeStoatRepository());
 
-        Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
+        Assert.Equal(
+            new Change[] { new CreateCategory("222", "Staff [222]"), new CreateChannel("501", "chat", "501", "222") },
+            result.Changes);
+        Assert.Empty(result.Skipped);
+    }
+
+    [Fact]
+    public async Task PrivateCategoryWithOnlyPrivateChannels_IsNotMirroredAndIsSkipped()
+    {
+        // The Private Category is mirrored only when it holds at least one public channel.
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [new DiscordCategory("222", "Staff", false)],
+                [new DiscordTextChannel("502", "secret", "222", false)]),
+            new FakeStoatRepository());
+
+        Assert.Empty(result.Changes);
+        Assert.Contains(result.Skipped, s => s.SourceId == "222" && !string.IsNullOrWhiteSpace(s.Reason));
     }
 }

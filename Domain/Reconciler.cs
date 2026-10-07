@@ -15,8 +15,15 @@ public static class Reconciler
             .OfType<string>()
             .ToHashSet();
 
-        var publicCategoryIds = discord.Categories
-            .Where(c => c.EveryoneCanView)
+        // A Private Category is mirrored only when it holds at least one public channel (issue #12),
+        // so those public channels can stay grouped under a Mirror Category.
+        var categoryIdsHoldingPublicChannel = discord.TextChannels
+            .Where(c => c.EveryoneCanView && c.CategoryId is not null)
+            .Select(c => c.CategoryId!)
+            .ToHashSet();
+
+        var mirroredCategoryIds = discord.Categories
+            .Where(c => c.EveryoneCanView || categoryIdsHoldingPublicChannel.Contains(c.Id))
             .Select(c => c.Id)
             .ToHashSet();
 
@@ -25,9 +32,9 @@ public static class Reconciler
 
         foreach (var category in discord.Categories)
         {
-            if (!category.EveryoneCanView)
+            if (!mirroredCategoryIds.Contains(category.Id))
             {
-                skipped.Add(new SkippedItem(category.Id, "Private category: @everyone cannot view it"));
+                skipped.Add(new SkippedItem(category.Id, "Private category: @everyone cannot view it and it holds no public channel"));
                 continue;
             }
 
@@ -47,13 +54,13 @@ public static class Reconciler
 
             if (!mirroredDiscordChannelIds.Contains(channel.Id))
             {
-                changes.Add(new CreateChannel(channel.Id, channel.Name, ChannelLink.ChannelDescription(channel.Id), MirroredCategoryId(channel, publicCategoryIds)));
+                changes.Add(new CreateChannel(channel.Id, channel.Name, ChannelLink.ChannelDescription(channel.Id), MirroredCategoryId(channel, mirroredCategoryIds)));
             }
         }
 
         return new ReconcileResult(changes, skipped);
     }
 
-    private static string? MirroredCategoryId(DiscordTextChannel channel, HashSet<string> publicCategoryIds) =>
-        channel.CategoryId is { } categoryId && publicCategoryIds.Contains(categoryId) ? categoryId : null;
+    private static string? MirroredCategoryId(DiscordTextChannel channel, HashSet<string> mirroredCategoryIds) =>
+        channel.CategoryId is { } categoryId && mirroredCategoryIds.Contains(categoryId) ? categoryId : null;
 }
