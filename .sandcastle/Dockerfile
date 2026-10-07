@@ -1,4 +1,4 @@
-FROM node:22-bookworm
+FROM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -21,8 +21,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 ARG AGENT_UID=1000
 ARG AGENT_GID=1000
 
-# Rename the base image's "node" user to "agent" and align UID/GID.
-RUN groupmod -o -g $AGENT_GID node && usermod -o -u $AGENT_UID -g $AGENT_GID -d /home/agent -m -l agent node
+# Create the "agent" user aligned to the host UID/GID.
+RUN groupadd -o -g $AGENT_GID agent && useradd -o -u $AGENT_UID -g $AGENT_GID -d /home/agent -m agent
 USER ${AGENT_UID}:${AGENT_GID}
 
 # Install Claude Code CLI
