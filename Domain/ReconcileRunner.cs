@@ -22,11 +22,11 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
                 case CreateChannel create:
                     // Categories are created first, so read them back to learn the Stoat IDs of the new ones.
                     mirrorCategoryIds ??= await GetMirrorCategoryIdsAsync(cancellationToken);
-                    var categoryId = create.SourceCategoryId is { } sourceCategoryId
-                        && mirrorCategoryIds.TryGetValue(sourceCategoryId, out var mirrorCategoryId)
-                            ? mirrorCategoryId
-                            : null;
-                    await stoat.CreateTextChannelAsync(create.Name, create.Description, categoryId, cancellationToken);
+                    await stoat.CreateTextChannelAsync(create.Name, create.Description, MirrorCategoryId(create.SourceCategoryId, mirrorCategoryIds), cancellationToken);
+                    break;
+                case CreateVoiceChannel create:
+                    mirrorCategoryIds ??= await GetMirrorCategoryIdsAsync(cancellationToken);
+                    await stoat.CreateVoiceChannelAsync(create.Name, create.Description, MirrorCategoryId(create.SourceCategoryId, mirrorCategoryIds), cancellationToken);
                     break;
                 default:
                     throw new InvalidOperationException($"Unhandled change type {change.GetType().Name}");
@@ -35,6 +35,9 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
 
         return result;
     }
+
+    private static string? MirrorCategoryId(string? sourceCategoryId, Dictionary<string, string> mirrorCategoryIds) =>
+        sourceCategoryId is { } id && mirrorCategoryIds.TryGetValue(id, out var mirrorCategoryId) ? mirrorCategoryId : null;
 
     private async Task<Dictionary<string, string>> GetMirrorCategoryIdsAsync(CancellationToken cancellationToken)
     {

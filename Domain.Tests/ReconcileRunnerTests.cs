@@ -125,4 +125,36 @@ public class ReconcileRunnerTests
 
         Assert.Empty(stoat.CreatedTextChannels);
     }
+
+    [Fact]
+    public async Task PublicVoiceChannel_IsCreatedInItsMirrorCategoryWithLinkAsDescription()
+    {
+        var stoat = new FakeStoatRepository();
+        var runner = new ReconcileRunner(
+            new FakeDiscordRepository(
+                [new DiscordCategory("111", "General", true)],
+                [],
+                [new DiscordVoiceChannel("601", "lounge", "111", true)]),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
+        var mirrorCategory = Assert.Single(snapshot.Categories);
+        var created = Assert.Single(stoat.CreatedVoiceChannels);
+        Assert.Equal(new CreatedVoiceChannel("lounge", "601", mirrorCategory.Id), created);
+    }
+
+    [Fact]
+    public async Task PrivateVoiceChannels_AreNotCreated()
+    {
+        var stoat = new FakeStoatRepository();
+        var runner = new ReconcileRunner(
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("602", "staff-voice", null, false)]),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        Assert.Empty(stoat.CreatedVoiceChannels);
+    }
 }

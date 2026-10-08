@@ -219,4 +219,86 @@ public class ReconcilerTests
         Assert.Empty(result.Changes);
         Assert.Contains(result.Skipped, s => s.SourceId == "222" && !string.IsNullOrWhiteSpace(s.Reason));
     }
+
+    [Fact]
+    public async Task PublicVoiceChannelWithoutMirror_ProducesCreateVoiceChannelChange()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [],
+                [],
+                [new DiscordVoiceChannel("601", "lounge", null, true)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(new Change[] { new CreateVoiceChannel("601", "lounge", "601", null) }, result.Changes);
+        Assert.Empty(result.Skipped);
+    }
+
+    [Fact]
+    public async Task PrivateVoiceChannel_ProducesNoCreateAndIsSkipped()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [],
+                [],
+                [new DiscordVoiceChannel("601", "lounge", null, true), new DiscordVoiceChannel("602", "staff-voice", null, false)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(new Change[] { new CreateVoiceChannel("601", "lounge", "601", null) }, result.Changes);
+        var skipped = Assert.Single(result.Skipped);
+        Assert.Equal("602", skipped.SourceId);
+        Assert.False(string.IsNullOrWhiteSpace(skipped.Reason));
+    }
+
+    [Fact]
+    public async Task VoiceChannelWithValidMirrorChannel_ProducesNoCreate()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true)]),
+            new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601\nSome topic")]));
+
+        Assert.Empty(result.Changes);
+        Assert.Empty(result.Skipped);
+    }
+
+    [Fact]
+    public async Task UnsupportedChannel_ProducesNoCreateAndIsSkipped()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository([], [], [], [new DiscordUnsupportedChannel("701", "forum")]),
+            new FakeStoatRepository());
+
+        Assert.Empty(result.Changes);
+        var skipped = Assert.Single(result.Skipped);
+        Assert.Equal("701", skipped.SourceId);
+        Assert.Contains("forum", skipped.Reason);
+    }
+
+    [Fact]
+    public async Task PublicVoiceChannelInPrivateCategory_MirrorsThePrivateCategoryAndPlacesChannelUnderIt()
+    {
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository(
+                [new DiscordCategory("222", "Staff", false)],
+                [],
+                [new DiscordVoiceChannel("601", "lounge", "222", true)]),
+            new FakeStoatRepository());
+
+        Assert.Equal(
+            new Change[] { new CreateCategory("222", "Staff [222]"), new CreateVoiceChannel("601", "lounge", "601", "222") },
+            result.Changes);
+        Assert.Empty(result.Skipped);
+    }
+
+    [Fact]
+    public async Task VoiceChannelThatBecamePrivateAfterMirroring_KeepsExistingMirrorUntouched()
+    {
+        // Issue #5: a channel that turns private keeps its existing Mirror Channel unchanged.
+        var result = await ReconcileAsync(
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, false)]),
+            new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601")]));
+
+        Assert.Empty(result.Changes);
+        Assert.Equal("601", Assert.Single(result.Skipped).SourceId);
+    }
 }

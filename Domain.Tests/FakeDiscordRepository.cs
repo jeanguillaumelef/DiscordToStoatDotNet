@@ -6,6 +6,8 @@ public sealed class FakeDiscordRepository : IDiscordRepository
 {
     private readonly DiscordCategory[] _categories;
     private readonly DiscordTextChannel[] _textChannels;
+    private readonly DiscordVoiceChannel[] _voiceChannels;
+    private readonly DiscordUnsupportedChannel[] _unsupportedChannels;
 
     public FakeDiscordRepository(params DiscordCategory[] categories)
         : this(categories, [])
@@ -13,11 +15,27 @@ public sealed class FakeDiscordRepository : IDiscordRepository
     }
 
     public FakeDiscordRepository(DiscordCategory[] categories, DiscordTextChannel[] textChannels)
+        : this(categories, textChannels, [])
+    {
+    }
+
+    public FakeDiscordRepository(DiscordCategory[] categories, DiscordTextChannel[] textChannels, DiscordVoiceChannel[] voiceChannels)
+        : this(categories, textChannels, voiceChannels, [])
+    {
+    }
+
+    public FakeDiscordRepository(
+        DiscordCategory[] categories,
+        DiscordTextChannel[] textChannels,
+        DiscordVoiceChannel[] voiceChannels,
+        DiscordUnsupportedChannel[] unsupportedChannels)
     {
         _categories = categories;
         _textChannels = textChannels;
+        _voiceChannels = voiceChannels;
+        _unsupportedChannels = unsupportedChannels;
     }
 
     public Task<DiscordSnapshot> GetSnapshotAsync(CancellationToken cancellationToken) =>
-        Task.FromResult(new DiscordSnapshot(_categories, _textChannels));
+        Task.FromResult(new DiscordSnapshot(_categories, _textChannels, _voiceChannels, _unsupportedChannels));
 }

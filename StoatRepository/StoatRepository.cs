@@ -12,29 +12,38 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
     public async Task<StoatSnapshot> GetSnapshotAsync(CancellationToken cancellationToken)
     {
         var server = await GetServerAsync(cancellationToken);
-        
+
         var categories = server.Categories
             .OrderBy(c => c.Position)
             .Select(c => new StoatCategory(c.Id, c.Name))
             .ToList();
-        
+
         // Server.TextChannels reads the websocket cache, which is null in ClientMode.Http, so
         // read the server's channel IDs over REST and fetch each channel instead.
         var textChannels = new List<StoatTextChannel>();
+        var voiceChannels = new List<StoatVoiceChannel>();
         foreach (var channelId in await GetChannelIdsAsync(cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (await _client.Rest.GetChannelAsync(channelId) is TextChannel textChannel)
+            switch (await _client.Rest.GetChannelAsync(channelId))
             {
-                textChannels.Add(new StoatTextChannel(
-                    textChannel.Id,
-                    textChannel.Name,
-                    textChannel.Description ?? string.Empty));
+                case TextChannel textChannel:
+                    textChannels.Add(new StoatTextChannel(
+                        textChannel.Id,
+                        textChannel.Name,
+                        textChannel.Description ?? string.Empty));
+                    break;
+                case VoiceChannel voiceChannel:
+                    voiceChannels.Add(new StoatVoiceChannel(
+                        voiceChannel.Id,
+                        voiceChannel.Name,
+                        voiceChannel.Description ?? string.Empty));
+                    break;
             }
         }
 
-        return new StoatSnapshot(categories, textChannels);
+        return new StoatSnapshot(categories, textChannels, voiceChannels);
     }
 
     public async Task CreateCategoryAsync(string title, CancellationToken cancellationToken)
@@ -47,7 +56,18 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
     {
         var server = await GetServerAsync(cancellationToken);
         var channel = await server.CreateTextChannelAsync(name, description);
+        await PlaceInCategoryAsync(server, channel.Id, categoryId);
+    }
 
+    public async Task CreateVoiceChannelAsync(string name, string description, string? categoryId, CancellationToken cancellationToken)
+    {
+        var server = await GetServerAsync(cancellationToken);
+        var channel = await server.CreateVoiceChannelAsync(name, description);
+        await PlaceInCategoryAsync(server, channel.Id, categoryId);
+    }
+
+    private async Task PlaceInCategoryAsync(Server server, string channelId, string? categoryId)
+    {
         if (categoryId is null)
         {
             return;
@@ -56,7 +76,7 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
         var category = server.Categories.FirstOrDefault(c => c.Id == categoryId)
             ?? throw new InvalidOperationException($"Stoat category {categoryId} was not found.");
         // category.ModifyAsync resolves its server through the websocket cache, which is null in ClientMode.Http.
-        await _client.Rest.ModifyServerCategoryAsync(server, categoryId, channels: new Option<string[]>([.. category.ChannelIds ?? [], channel.Id]));
+        await _client.Rest.ModifyServerCategoryAsync(server, categoryId, channels: new Option<string[]>([.. category.ChannelIds ?? [], channelId]));
     }
 
     private async Task<IReadOnlyList<string>> GetChannelIdsAsync(CancellationToken cancellationToken)

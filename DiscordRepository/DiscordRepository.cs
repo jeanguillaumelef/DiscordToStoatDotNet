@@ -29,13 +29,37 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             .Select(c => new DiscordCategory(c.Id.ToString(), c.Name, EveryoneCanView(guild, c)))
             .ToList();
 
-        var textChannels = channels
-            .OfType<RestTextChannel>()
-            .OrderBy(c => c.Position)
-            .Select(c => new DiscordTextChannel(c.Id.ToString(), c.Name, c.CategoryId?.ToString(), EveryoneCanView(guild, c)))
-            .ToList();
+        var textChannels = new List<DiscordTextChannel>();
+        var voiceChannels = new List<DiscordVoiceChannel>();
+        var unsupportedChannels = new List<DiscordUnsupportedChannel>();
 
-        return new DiscordSnapshot(categories, textChannels);
+        foreach (var channel in channels.Where(c => c.ChannelType != ChannelType.Category).OrderBy(c => c.Position))
+        {
+            switch (channel.ChannelType)
+            {
+                case ChannelType.Text:
+                    textChannels.Add(new DiscordTextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
+                    break;
+                case ChannelType.Voice:
+                    voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
+                    break;
+                default:
+                    unsupportedChannels.Add(new DiscordUnsupportedChannel(channel.Id.ToString(), UnsupportedTypeName(channel.ChannelType)));
+                    break;
+            }
+        }
+
+        // Threads aren't returned by GetChannelsAsync (the "list guild channels" endpoint excludes them);
+        // each container channel (text/news/forum) must be asked for its own active threads.
+        foreach (var container in channels.OfType<IThreadContainerChannel>())
+        {
+            foreach (var thread in await container.GetActiveThreadsAsync(requestOptions))
+            {
+                unsupportedChannels.Add(new DiscordUnsupportedChannel(thread.Id.ToString(), "thread"));
+            }
+        }
+
+        return new DiscordSnapshot(categories, textChannels, voiceChannels, unsupportedChannels);
     }
 
     public async ValueTask DisposeAsync()
@@ -54,4 +78,13 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             _ => everyone.Permissions.ViewChannel,
         };
     }
+
+    private static string UnsupportedTypeName(ChannelType type) => type switch
+    {
+        ChannelType.News => "announcement",
+        ChannelType.Stage => "stage",
+        ChannelType.Forum or ChannelType.Media => "forum",
+        ChannelType.PublicThread or ChannelType.PrivateThread or ChannelType.NewsThread => "thread",
+        _ => type.ToString(),
+    };
 }
