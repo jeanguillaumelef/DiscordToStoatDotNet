@@ -21,6 +21,12 @@ public sealed class DiscordTestGuild(string botToken, ulong guildId) : IAsyncDis
         return await guild.CreateTextChannelAsync(name, properties => properties.CategoryId = categoryId);
     }
 
+    public async Task<RestVoiceChannel> CreateVoiceChannelAsync(string name, ulong categoryId)
+    {
+        var guild = await GetGuildAsync();
+        return await guild.CreateVoiceChannelAsync(name, properties => properties.CategoryId = categoryId);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _client.DisposeAsync();

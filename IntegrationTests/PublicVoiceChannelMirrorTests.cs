@@ -7,13 +7,13 @@ namespace IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(LiveServersCollection.Name)]
-public class PublicChannelMirrorTests
+public class PublicVoiceChannelMirrorTests
 {
     [Fact]
-    public async Task Reconcile_MirrorsPublicChannelUnderItsCategory_CategoryFirst()
+    public async Task Reconcile_MirrorsPublicVoiceChannelUnderItsCategory_CategoryFirst()
     {
         var settings = IntegrationSettings.Load(new ConfigurationBuilder()
-            .AddUserSecrets<PublicChannelMirrorTests>(optional: true)
+            .AddUserSecrets<PublicVoiceChannelMirrorTests>(optional: true)
             .Build());
         var guildId = ulong.Parse(settings.DiscordGuildId);
 
@@ -48,7 +48,7 @@ public class PublicChannelMirrorTests
             var sourceCategory = await discordGuild.CreateCategoryAsync(prefix);
             ledger.Add($"Discord category {sourceCategory.Name}", () => sourceCategory.DeleteAsync());
 
-            var sourceChannel = await discordGuild.CreateTextChannelAsync($"{prefix}-channel", sourceCategory.Id);
+            var sourceChannel = await discordGuild.CreateVoiceChannelAsync($"{prefix}-voice", sourceCategory.Id);
             ledger.Add($"Discord channel {sourceChannel.Name}", () => sourceChannel.DeleteAsync());
 
             // The run may create mirrors for other public channels in the guild too; teardown removes everything new since this snapshot.
@@ -61,7 +61,7 @@ public class PublicChannelMirrorTests
 
             var mirrorCategory = Assert.Single(after.Categories,
                 c => c.Title == ChannelLink.CategoryTitle(prefix, sourceCategory.Id.ToString()));
-            var mirrorChannel = Assert.Single(after.TextChannels,
+            var mirrorChannel = Assert.Single(after.VoiceChannels,
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 
             Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Id));

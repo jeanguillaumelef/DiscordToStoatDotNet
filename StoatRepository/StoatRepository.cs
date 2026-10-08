@@ -26,19 +26,20 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            switch (await _client.Rest.GetChannelAsync(channelId))
+            // Stoat returns a voice channel as a "TextChannel" carrying a "voice" object, which StoatSharp's
+            // typed channels drop, so read the raw payload (ADR 0003). "VoiceChannel" is the legacy type.
+            var channel = await _client.Rest.SendRequestAsync<StoatChannelResponse>(RequestType.Get, $"/channels/{channelId}");
+            var name = channel?.Name ?? string.Empty;
+            var description = channel?.Description ?? string.Empty;
+
+            switch (channel?.ChannelType)
             {
-                case TextChannel textChannel:
-                    textChannels.Add(new StoatTextChannel(
-                        textChannel.Id,
-                        textChannel.Name,
-                        textChannel.Description ?? string.Empty));
+                case "TextChannel" when channel.Voice is not null:
+                case "VoiceChannel":
+                    voiceChannels.Add(new StoatVoiceChannel(channelId, name, description));
                     break;
-                case VoiceChannel voiceChannel:
-                    voiceChannels.Add(new StoatVoiceChannel(
-                        voiceChannel.Id,
-                        voiceChannel.Name,
-                        voiceChannel.Description ?? string.Empty));
+                case "TextChannel":
+                    textChannels.Add(new StoatTextChannel(channelId, name, description));
                     break;
             }
         }

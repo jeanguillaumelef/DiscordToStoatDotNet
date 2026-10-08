@@ -50,8 +50,10 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
         }
 
         // Threads aren't returned by GetChannelsAsync (the "list guild channels" endpoint excludes them);
-        // each container channel (text/news/forum) must be asked for its own active threads.
-        foreach (var container in channels.OfType<IThreadContainerChannel>())
+        // each container channel (text/news/forum) must be asked for its own active threads. RestVoiceChannel
+        // also implements IThreadContainerChannel (inherited via RestTextChannel) but throws NotSupportedException
+        // if actually called, since voice channels don't support threads.
+        foreach (var container in channels.OfType<IThreadContainerChannel>().Where(c => c is not RestVoiceChannel))
         {
             foreach (var thread in await container.GetActiveThreadsAsync(requestOptions))
             {
