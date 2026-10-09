@@ -32,12 +32,16 @@ _Avoid_: Stoat channel, copy, target channel
 The Stoat category that corresponds to one Source Category.
 _Avoid_: Stoat group
 
+**Channel Description**:
+The free-text description of a Source Channel (Discord calls it the channel topic). The Bridge copies it onto the Mirror Channel's description, after the Channel Link line. Discord wins: Reconcile overwrites whatever a Stoat admin wrote there. If it does not fit the Stoat length limit it is truncated and the Bridge reports a warning; the Channel Link line is never cut.
+_Avoid_: Topic (the Discord term; use Channel Description in the domain), Mirror description (that is the whole Stoat field, which also holds the Channel Link)
+
 **Channel Link**:
 The association between a Source Channel or Source Category and its Mirror. For a channel, it is the Discord ID on the first line of the Mirror Channel's description. For a category, it is the Discord ID in the Mirror Category's title.
 _Avoid_: Mapping, binding
 
 **Reconcile**:
-Bringing every Mirror Channel and Mirror Category into line with the current Discord structure (names, order, category membership). Runs at startup and again on each live Discord change.
+Bringing every Mirror Channel and Mirror Category into line with the current Discord structure (names, order, category membership, Channel Descriptions). Runs at startup and again on each live Discord change.
 _Avoid_: Sync, refresh
 
 **Archived Channel**:
