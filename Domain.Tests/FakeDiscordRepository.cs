@@ -5,7 +5,7 @@ namespace Domain.Tests;
 public sealed class FakeDiscordRepository : IDiscordRepository
 {
     private readonly Category[] _categories;
-    private readonly DiscordTextChannel[] _textChannels;
+    private readonly TextChannel[] _textChannels;
     private readonly DiscordVoiceChannel[] _voiceChannels;
     private readonly DiscordUnsupportedChannel[] _unsupportedChannels;
 
@@ -14,19 +14,19 @@ public sealed class FakeDiscordRepository : IDiscordRepository
     {
     }
 
-    public FakeDiscordRepository(Category[] categories, DiscordTextChannel[] textChannels)
+    public FakeDiscordRepository(Category[] categories, TextChannel[] textChannels)
         : this(categories, textChannels, [])
     {
     }
 
-    public FakeDiscordRepository(Category[] categories, DiscordTextChannel[] textChannels, DiscordVoiceChannel[] voiceChannels)
+    public FakeDiscordRepository(Category[] categories, TextChannel[] textChannels, DiscordVoiceChannel[] voiceChannels)
         : this(categories, textChannels, voiceChannels, [])
     {
     }
 
     public FakeDiscordRepository(
         Category[] categories,
-        DiscordTextChannel[] textChannels,
+        TextChannel[] textChannels,
         DiscordVoiceChannel[] voiceChannels,
         DiscordUnsupportedChannel[] unsupportedChannels)
     {

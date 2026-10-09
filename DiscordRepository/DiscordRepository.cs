@@ -29,7 +29,7 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             .Select(c => new Category(c.Id.ToString(), c.Name, EveryoneCanView(guild, c)))
             .ToList();
 
-        var textChannels = new List<DiscordTextChannel>();
+        var textChannels = new List<TextChannel>();
         var voiceChannels = new List<DiscordVoiceChannel>();
         var unsupportedChannels = new List<DiscordUnsupportedChannel>();
 
@@ -38,7 +38,7 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             switch (channel.ChannelType)
             {
                 case ChannelType.Text:
-                    textChannels.Add(new DiscordTextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
+                    textChannels.Add(new TextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
                     break;
                 case ChannelType.Voice:
                     voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));

@@ -139,7 +139,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
-                [new DiscordTextChannel("501", "chat", "111", true)]),
+                [new TextChannel("501", "chat", "111", true)]),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -153,7 +153,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [],
-                [new DiscordTextChannel("501", "chat", null, true), new DiscordTextChannel("502", "staff", null, false)]),
+                [new TextChannel("501", "chat", null, true), new TextChannel("502", "staff", null, false)]),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
@@ -166,7 +166,7 @@ public class ReconcilerTests
     public async Task TextChannelWithValidMirrorChannel_ProducesNoCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [new DiscordTextChannel("501", "chat", null, true)]),
+            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true)]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", "501\nSome topic")]));
 
         Assert.Empty(result.Changes);
@@ -183,7 +183,7 @@ public class ReconcilerTests
     public async Task MirrorChannelWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string description)
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [new DiscordTextChannel("501", "chat", null, true)]),
+            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true)]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", description)]));
 
         Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
@@ -197,7 +197,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
-                [new DiscordTextChannel("501", "chat", "222", true)]),
+                [new TextChannel("501", "chat", "222", true)]),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -213,7 +213,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
-                [new DiscordTextChannel("502", "secret", "222", false)]),
+                [new TextChannel("502", "secret", "222", false)]),
             new FakeStoatRepository());
 
         Assert.Empty(result.Changes);

@@ -2,6 +2,6 @@ namespace Domain;
 
 public sealed record DiscordSnapshot(
     IReadOnlyList<Category> Categories,
-    IReadOnlyList<DiscordTextChannel> TextChannels,
+    IReadOnlyList<TextChannel> TextChannels,
     IReadOnlyList<DiscordVoiceChannel> VoiceChannels,
     IReadOnlyList<DiscordUnsupportedChannel> UnsupportedChannels);

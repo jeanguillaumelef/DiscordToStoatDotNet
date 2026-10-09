@@ -72,7 +72,7 @@ public class ReconcileRunnerTests
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
-                [new DiscordTextChannel("501", "chat", "111", true)]),
+                [new TextChannel("501", "chat", "111", true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -88,7 +88,7 @@ public class ReconcileRunnerTests
     {
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository([], [new DiscordTextChannel("501", "chat", null, true)]),
+            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -103,7 +103,7 @@ public class ReconcileRunnerTests
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
-                [new DiscordTextChannel("501", "chat", "111", true)]),
+                [new TextChannel("501", "chat", "111", true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -118,7 +118,7 @@ public class ReconcileRunnerTests
     {
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository([], [new DiscordTextChannel("502", "staff", null, false)]),
+            new FakeDiscordRepository([], [new TextChannel("502", "staff", null, false)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
