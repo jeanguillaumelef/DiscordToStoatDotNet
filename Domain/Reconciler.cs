@@ -6,7 +6,7 @@ public static class Reconciler
     public static ReconcileResult Reconcile(DiscordSnapshot discord, StoatSnapshot stoat)
     {
         var mirroredDiscordCategoryIds = stoat.Categories
-            .Select(c => ChannelLink.SourceIdFromCategoryTitle(c.Title))
+            .Select(c => ChannelLink.SourceIdFromCategoryTitle(c.Name))
             .OfType<string>()
             .ToHashSet();
 

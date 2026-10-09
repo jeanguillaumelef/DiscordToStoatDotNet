@@ -4,24 +4,24 @@ namespace Domain.Tests;
 
 public sealed class FakeStoatRepository : IStoatRepository
 {
-    private readonly List<StoatCategory> _categories;
+    private readonly List<Category> _categories;
     private readonly List<StoatTextChannel> _textChannels;
     private readonly List<StoatVoiceChannel> _voiceChannels;
     private readonly List<string> _createdCategoryTitles = [];
     private readonly List<CreatedTextChannel> _createdTextChannels = [];
     private readonly List<CreatedVoiceChannel> _createdVoiceChannels = [];
 
-    public FakeStoatRepository(params StoatCategory[] categories)
+    public FakeStoatRepository(params Category[] categories)
         : this(categories, [])
     {
     }
 
-    public FakeStoatRepository(StoatCategory[] categories, StoatTextChannel[] textChannels)
+    public FakeStoatRepository(Category[] categories, StoatTextChannel[] textChannels)
         : this(categories, textChannels, [])
     {
     }
 
-    public FakeStoatRepository(StoatCategory[] categories, StoatTextChannel[] textChannels, StoatVoiceChannel[] voiceChannels)
+    public FakeStoatRepository(Category[] categories, StoatTextChannel[] textChannels, StoatVoiceChannel[] voiceChannels)
     {
         _categories = [.. categories];
         _textChannels = [.. textChannels];
@@ -40,7 +40,7 @@ public sealed class FakeStoatRepository : IStoatRepository
     public Task CreateCategoryAsync(string title, CancellationToken cancellationToken)
     {
         _createdCategoryTitles.Add(title);
-        _categories.Add(new StoatCategory($"created-{_categories.Count}", title));
+        _categories.Add(new Category($"created-{_categories.Count}", title, true));
         return Task.CompletedTask;
     }
 

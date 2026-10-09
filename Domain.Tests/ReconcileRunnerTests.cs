@@ -53,7 +53,7 @@ public class ReconcileRunnerTests
     [Fact]
     public async Task ExistingMirrorCategories_AreNotRecreated()
     {
-        var stoat = new FakeStoatRepository(new StoatCategory("s1", "A [111]"));
+        var stoat = new FakeStoatRepository(new Category("s1", "A [111]", true));
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
                 new Category("111", "A", true),

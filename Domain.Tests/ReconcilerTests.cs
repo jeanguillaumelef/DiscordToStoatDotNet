@@ -47,7 +47,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(new Category("222", "Staff", false)),
-            new FakeStoatRepository(new StoatCategory("s1", "Staff [222]")));
+            new FakeStoatRepository(new Category("s1", "Staff [222]", true)));
 
         Assert.Empty(result.Changes);
         Assert.Equal("222", Assert.Single(result.Skipped).SourceId);
@@ -76,7 +76,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
-            new FakeStoatRepository(new StoatCategory("s1", stoatTitle)));
+            new FakeStoatRepository(new Category("s1", stoatTitle, true)));
 
         Assert.Equal(new Change[] { new CreateCategory("111", "General [111]") }, result.Changes);
     }
@@ -86,7 +86,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
-            new FakeStoatRepository(new StoatCategory("s1", "General [111]")));
+            new FakeStoatRepository(new Category("s1", "General [111]", true)));
 
         Assert.Empty(result.Changes);
         Assert.Empty(result.Skipped);
@@ -97,7 +97,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(new Category("111", "New Name", true)),
-            new FakeStoatRepository(new StoatCategory("s1", "Old Name [111]")));
+            new FakeStoatRepository(new Category("s1", "Old Name [111]", true)));
 
         Assert.Empty(result.Changes);
     }
@@ -107,7 +107,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
-            new FakeStoatRepository(new StoatCategory("s1", "General [999]")));
+            new FakeStoatRepository(new Category("s1", "General [999]", true)));
 
         Assert.Equal(new Change[] { new CreateCategory("111", "General [111]") }, result.Changes);
     }
@@ -119,7 +119,7 @@ public class ReconcilerTests
             new FakeDiscordRepository(
                 new Category("111", "A", true),
                 new Category("222", "B", true)),
-            new FakeStoatRepository(new StoatCategory("s1", "A [111]")));
+            new FakeStoatRepository(new Category("s1", "A [111]", true)));
 
         Assert.Equal(new Change[] { new CreateCategory("222", "B [222]") }, result.Changes);
     }

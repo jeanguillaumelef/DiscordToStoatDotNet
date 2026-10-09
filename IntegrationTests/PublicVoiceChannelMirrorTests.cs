@@ -60,7 +60,7 @@ public class PublicVoiceChannelMirrorTests
             var after = await stoat.GetSnapshotAsync(CancellationToken.None);
 
             var mirrorCategory = Assert.Single(after.Categories,
-                c => c.Title == ChannelLink.CategoryTitle(prefix, sourceCategory.Id.ToString()));
+                c => c.Name == ChannelLink.CategoryTitle(prefix, sourceCategory.Id.ToString()));
             var mirrorChannel = Assert.Single(after.VoiceChannels,
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 

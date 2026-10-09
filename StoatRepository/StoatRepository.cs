@@ -15,7 +15,7 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
 
         var categories = server.Categories
             .OrderBy(c => c.Position)
-            .Select(c => new StoatCategory(c.Id, c.Name))
+            .Select(c => new Category(c.Id, c.Name, true)) // Stoat does not support per-category permissions, so assume everyone can view.
             .ToList();
 
         // Server.TextChannels reads the websocket cache, which is null in ClientMode.Http, so

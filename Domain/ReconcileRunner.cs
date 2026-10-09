@@ -45,7 +45,7 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
         var ids = new Dictionary<string, string>();
         foreach (var category in snapshot.Categories)
         {
-            if (ChannelLink.SourceIdFromCategoryTitle(category.Title) is { } sourceId)
+            if (ChannelLink.SourceIdFromCategoryTitle(category.Name) is { } sourceId)
             {
                 ids.TryAdd(sourceId, category.Name);
             }
