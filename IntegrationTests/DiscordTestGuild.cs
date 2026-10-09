@@ -15,16 +15,23 @@ public sealed class DiscordTestGuild(string botToken, ulong guildId) : IAsyncDis
         return await guild.CreateCategoryChannelAsync(name);
     }
 
-    public async Task<RestTextChannel> CreateTextChannelAsync(string name, ulong categoryId)
+    public async Task<RestTextChannel> CreateTextChannelAsync(string name, ulong categoryId, string? topic = null)
     {
         var guild = await GetGuildAsync();
-        return await guild.CreateTextChannelAsync(name, properties => properties.CategoryId = categoryId);
+        return await guild.CreateTextChannelAsync(name, properties =>
+        {
+            properties.CategoryId = categoryId;
+            properties.Topic = topic;
+        });
     }
 
     public async Task<RestVoiceChannel> CreateVoiceChannelAsync(string name, ulong categoryId)
     {
         var guild = await GetGuildAsync();
-        return await guild.CreateVoiceChannelAsync(name, properties => properties.CategoryId = categoryId);
+        return await guild.CreateVoiceChannelAsync(name, properties =>
+        {
+            properties.CategoryId = categoryId;
+        });
     }
 
     public async ValueTask DisposeAsync()

@@ -28,6 +28,9 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
                     mirrorCategoryIds ??= await GetMirrorCategoryIdsAsync(cancellationToken);
                     await stoat.CreateVoiceChannelAsync(create.Name, create.Description, MirrorCategoryId(create.SourceCategoryId, mirrorCategoryIds), cancellationToken);
                     break;
+                case UpdateChannelDescription update:
+                    await stoat.SetChannelDescriptionAsync(update.StoatChannelId, update.Description, cancellationToken);
+                    break;
                 default:
                     throw new InvalidOperationException($"Unhandled change type {change.GetType().Name}");
             }

@@ -38,10 +38,10 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
             switch (channel.ChannelType)
             {
                 case ChannelType.Text:
-                    textChannels.Add(new TextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
+                    textChannels.Add(new TextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel), (channel as ITextChannel)?.Topic ?? string.Empty));
                     break;
                 case ChannelType.Voice:
-                    voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
+                    voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel), (channel as ITextChannel)?.Topic ?? string.Empty));
                     break;
                 default:
                     unsupportedChannels.Add(new DiscordUnsupportedChannel(channel.Id.ToString(), UnsupportedTypeName(channel.ChannelType)));

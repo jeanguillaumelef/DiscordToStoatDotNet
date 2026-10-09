@@ -48,7 +48,7 @@ public class PublicChannelMirrorTests
             var sourceCategory = await discordGuild.CreateCategoryAsync(prefix);
             ledger.Add($"Discord category {sourceCategory.Name}", () => sourceCategory.DeleteAsync());
 
-            var sourceChannel = await discordGuild.CreateTextChannelAsync($"{prefix}-channel", sourceCategory.Id);
+            var sourceChannel = await discordGuild.CreateTextChannelAsync($"{prefix}-channel", sourceCategory.Id, "chat topic");
             ledger.Add($"Discord channel {sourceChannel.Name}", () => sourceChannel.DeleteAsync());
 
             // The run may create mirrors for other public channels in the guild too; teardown removes everything new since this snapshot.
@@ -65,6 +65,15 @@ public class PublicChannelMirrorTests
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 
             Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Name));
+
+            // The Channel Description is written after the Channel Link, and "\n" must round-trip through Stoat unchanged.
+            Assert.Equal($"{sourceChannel.Id}\nchat topic", mirrorChannel.Description);
+
+            // A Channel Description edited on Discord overwrites the Mirror Channel's description at the next Reconcile.
+            await sourceChannel.ModifyAsync(properties => properties.Topic = "edited topic");
+            await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
+            var edited = Assert.Single((await stoat.GetSnapshotAsync(CancellationToken.None)).TextChannels, c => c.Id == mirrorChannel.Id);
+            Assert.Equal($"{sourceChannel.Id}\nedited topic", edited.Description);
 
             // Stoat IDs are ULIDs, which sort by creation time, so the category was created before the channel.
             Assert.True(string.CompareOrdinal(mirrorCategory.Name, mirrorChannel.Id) < 0,

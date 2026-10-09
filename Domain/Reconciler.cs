@@ -10,15 +10,23 @@ public static class Reconciler
             .OfType<string>()
             .ToHashSet();
 
-        var mirroredDiscordChannelIds = stoat.TextChannels
-            .Select(c => ChannelLink.SourceIdFromChannelDescription(c.Description))
-            .OfType<string>()
-            .ToHashSet();
+        var mirrorTextChannels = new Dictionary<string, StoatTextChannel>();
+        foreach (var mirror in stoat.TextChannels)
+        {
+            if (ChannelLink.SourceIdFromChannelDescription(mirror.Description) is { } id)
+            {
+                mirrorTextChannels.TryAdd(id, mirror);
+            }
+        }
 
-        var mirroredDiscordVoiceChannelIds = stoat.VoiceChannels
-            .Select(c => ChannelLink.SourceIdFromChannelDescription(c.Description))
-            .OfType<string>()
-            .ToHashSet();
+        var mirrorVoiceChannels = new Dictionary<string, StoatVoiceChannel>();
+        foreach (var mirror in stoat.VoiceChannels)
+        {
+            if (ChannelLink.SourceIdFromChannelDescription(mirror.Description) is { } id)
+            {
+                mirrorVoiceChannels.TryAdd(id, mirror);
+            }
+        }
 
         // A Private Category is mirrored only when it holds at least one public channel (issue #12),
         // so those public channels can stay grouped under a Mirror Category.
@@ -35,6 +43,7 @@ public static class Reconciler
 
         var changes = new List<Change>();
         var skipped = new List<SkippedItem>();
+        var warnings = new List<ReconcileWarning>();
 
         foreach (var category in discord.Categories)
         {
@@ -58,9 +67,17 @@ public static class Reconciler
                 continue;
             }
 
-            if (!mirroredDiscordChannelIds.Contains(channel.Id))
+            var description = ComposeDescription(channel.Id, channel.Description, warnings);
+            if (mirrorTextChannels.TryGetValue(channel.Id, out var mirror))
             {
-                changes.Add(new CreateChannel(channel.Id, channel.Name, ChannelLink.ChannelDescription(channel.Id), MirroredCategoryId(channel.CategoryId, mirroredCategoryIds)));
+                if (mirror.Description != description)
+                {
+                    changes.Add(new UpdateChannelDescription(mirror.Id, description));
+                }
+            }
+            else
+            {
+                changes.Add(new CreateChannel(channel.Id, channel.Name, description, MirroredCategoryId(channel.CategoryId, mirroredCategoryIds)));
             }
         }
 
@@ -72,9 +89,17 @@ public static class Reconciler
                 continue;
             }
 
-            if (!mirroredDiscordVoiceChannelIds.Contains(channel.Id))
+            var description = ComposeDescription(channel.Id, channel.Description, warnings);
+            if (mirrorVoiceChannels.TryGetValue(channel.Id, out var mirror))
             {
-                changes.Add(new CreateVoiceChannel(channel.Id, channel.Name, ChannelLink.ChannelDescription(channel.Id), MirroredCategoryId(channel.CategoryId, mirroredCategoryIds)));
+                if (mirror.Description != description)
+                {
+                    changes.Add(new UpdateChannelDescription(mirror.Id, description));
+                }
+            }
+            else
+            {
+                changes.Add(new CreateVoiceChannel(channel.Id, channel.Name, description, MirroredCategoryId(channel.CategoryId, mirroredCategoryIds)));
             }
         }
 
@@ -83,7 +108,18 @@ public static class Reconciler
             skipped.Add(new SkippedItem(channel.Id, $"Unsupported channel type: {channel.TypeName}"));
         }
 
-        return new ReconcileResult(changes, skipped);
+        return new ReconcileResult(changes, skipped, warnings);
+    }
+
+    private static string ComposeDescription(string sourceId, string channelDescription, List<ReconcileWarning> warnings)
+    {
+        var composed = ChannelLink.ComposeChannelDescription(sourceId, channelDescription);
+        if (composed.WasTruncated)
+        {
+            warnings.Add(new ReconcileWarning(sourceId, "Channel Description was truncated to fit the Stoat description limit"));
+        }
+
+        return composed.Text;
     }
 
     private static string? MirroredCategoryId(string? categoryId, HashSet<string> mirroredCategoryIds) =>

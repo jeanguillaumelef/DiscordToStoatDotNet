@@ -67,6 +67,19 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
         await PlaceInCategoryAsync(server, channel.Id, categoryId);
     }
 
+    public async Task SetChannelDescriptionAsync(string channelId, string description, CancellationToken cancellationToken)
+    {
+        if (description.Length == 0)
+        {
+            // StoatSharp sends an empty description as a removal; the Channel Link must never be removed.
+            throw new ArgumentException("A Mirror Channel description must not be empty.", nameof(description));
+        }
+
+        await GetServerAsync(cancellationToken); // ensures login
+        // REST client directly, like the snapshot reads, to avoid the websocket cache (ADR 0003).
+        await _client.Rest.ModifyChannelAsync(channelId, desc: new Option<string?>(description));
+    }
+
     private async Task PlaceInCategoryAsync(Server server, string channelId, string? categoryId)
     {
         if (categoryId is null)

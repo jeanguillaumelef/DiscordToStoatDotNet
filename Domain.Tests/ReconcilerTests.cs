@@ -139,7 +139,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
-                [new TextChannel("501", "chat", "111", true)]),
+                [new TextChannel("501", "chat", "111", true, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -153,7 +153,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [],
-                [new TextChannel("501", "chat", null, true), new TextChannel("502", "staff", null, false)]),
+                [new TextChannel("501", "chat", null, true, ""), new TextChannel("502", "staff", null, false, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
@@ -166,7 +166,7 @@ public class ReconcilerTests
     public async Task TextChannelWithValidMirrorChannel_ProducesNoCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true)]),
+            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true, "Some topic")]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", "501\nSome topic")]));
 
         Assert.Empty(result.Changes);
@@ -183,7 +183,7 @@ public class ReconcilerTests
     public async Task MirrorChannelWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string description)
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true)]),
+            new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true, "")]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", description)]));
 
         Assert.Equal(new Change[] { new CreateChannel("501", "chat", "501", null) }, result.Changes);
@@ -197,7 +197,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
-                [new TextChannel("501", "chat", "222", true)]),
+                [new TextChannel("501", "chat", "222", true, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -213,7 +213,7 @@ public class ReconcilerTests
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
-                [new TextChannel("502", "secret", "222", false)]),
+                [new TextChannel("502", "secret", "222", false, "")]),
             new FakeStoatRepository());
 
         Assert.Empty(result.Changes);
@@ -227,7 +227,7 @@ public class ReconcilerTests
             new FakeDiscordRepository(
                 [],
                 [],
-                [new DiscordVoiceChannel("601", "lounge", null, true)]),
+                [new DiscordVoiceChannel("601", "lounge", null, true, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateVoiceChannel("601", "lounge", "601", null) }, result.Changes);
@@ -241,7 +241,7 @@ public class ReconcilerTests
             new FakeDiscordRepository(
                 [],
                 [],
-                [new DiscordVoiceChannel("601", "lounge", null, true), new DiscordVoiceChannel("602", "staff-voice", null, false)]),
+                [new DiscordVoiceChannel("601", "lounge", null, true, ""), new DiscordVoiceChannel("602", "staff-voice", null, false, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateVoiceChannel("601", "lounge", "601", null) }, result.Changes);
@@ -254,7 +254,7 @@ public class ReconcilerTests
     public async Task VoiceChannelWithValidMirrorChannel_ProducesNoCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true)]),
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true, "Some topic")]),
             new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601\nSome topic")]));
 
         Assert.Empty(result.Changes);
@@ -281,7 +281,7 @@ public class ReconcilerTests
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
                 [],
-                [new DiscordVoiceChannel("601", "lounge", "222", true)]),
+                [new DiscordVoiceChannel("601", "lounge", "222", true, "")]),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -295,7 +295,7 @@ public class ReconcilerTests
     {
         // Issue #5: a channel that turns private keeps its existing Mirror Channel unchanged.
         var result = await ReconcileAsync(
-            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, false)]),
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, false, "")]),
             new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601")]));
 
         Assert.Empty(result.Changes);

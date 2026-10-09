@@ -29,7 +29,12 @@ foreach (var skipped in result.Skipped)
     Console.WriteLine($"Skipped {skipped.SourceId}: {skipped.Reason}");
 }
 
-Console.WriteLine($"Reconcile done: {result.Changes.Count} change(s) applied, {result.Skipped.Count} skipped.");
+foreach (var warning in result.Warnings)
+{
+    Console.WriteLine($"Warning {warning.SourceId}: {warning.Message}");
+}
+
+Console.WriteLine($"Reconcile done: {result.Changes.Count} change(s) applied, {result.Skipped.Count} skipped, {result.Warnings.Count} warning(s).");
 
 static string Require(IConfiguration configuration, string key) =>
     configuration[key] is { Length: > 0 } value
