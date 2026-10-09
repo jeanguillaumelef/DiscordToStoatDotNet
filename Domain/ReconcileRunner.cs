@@ -50,7 +50,7 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
         {
             if (ChannelLink.SourceIdFromCategoryTitle(category.Name) is { } sourceId)
             {
-                ids.TryAdd(sourceId, category.Name);
+                ids.TryAdd(sourceId, category.Id);
             }
         }
 

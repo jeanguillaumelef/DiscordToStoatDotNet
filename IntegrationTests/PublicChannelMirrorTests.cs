@@ -64,7 +64,7 @@ public class PublicChannelMirrorTests
             var mirrorChannel = Assert.Single(after.TextChannels,
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 
-            Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Name));
+            Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Id));
 
             // The Channel Description is written after the Channel Link, and "\n" must round-trip through Stoat unchanged.
             Assert.Equal($"{sourceChannel.Id}\nchat topic", mirrorChannel.Description);
@@ -76,8 +76,8 @@ public class PublicChannelMirrorTests
             Assert.Equal($"{sourceChannel.Id}\nedited topic", edited.Description);
 
             // Stoat IDs are ULIDs, which sort by creation time, so the category was created before the channel.
-            Assert.True(string.CompareOrdinal(mirrorCategory.Name, mirrorChannel.Id) < 0,
-                $"Mirror Category {mirrorCategory.Name} should be created before Mirror Channel {mirrorChannel.Id}.");
+            Assert.True(string.CompareOrdinal(mirrorCategory.Id, mirrorChannel.Id) < 0,
+                $"Mirror Category {mirrorCategory.Id} should be created before Mirror Channel {mirrorChannel.Id}.");
         }
     }
 

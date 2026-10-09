@@ -80,7 +80,7 @@ public class ReconcileRunnerTests
         var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
         var mirrorCategory = Assert.Single(snapshot.Categories);
         var created = Assert.Single(stoat.CreatedTextChannels);
-        Assert.Equal(new CreatedTextChannel("chat", "501", mirrorCategory.Name), created);
+        Assert.Equal(new CreatedTextChannel("chat", "501", mirrorCategory.Id), created);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class ReconcileRunnerTests
         var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
         var mirrorCategory = Assert.Single(snapshot.Categories);
         var created = Assert.Single(stoat.CreatedVoiceChannels);
-        Assert.Equal(new CreatedVoiceChannel("lounge", "601", mirrorCategory.Name), created);
+        Assert.Equal(new CreatedVoiceChannel("lounge", "601", mirrorCategory.Id), created);
     }
 
     [Fact]
