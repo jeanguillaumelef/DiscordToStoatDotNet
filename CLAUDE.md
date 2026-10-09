@@ -115,3 +115,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Architecture diagrams
+
+C4 diagrams (Mermaid, one file per level) live in `docs/architecture/`; the `c4-diagrams` skill draws and updates them.
