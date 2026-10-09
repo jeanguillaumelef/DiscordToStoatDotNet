@@ -64,11 +64,11 @@ public class PublicVoiceChannelMirrorTests
             var mirrorChannel = Assert.Single(after.VoiceChannels,
                 c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
 
-            Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Id));
+            Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Name));
 
             // Stoat IDs are ULIDs, which sort by creation time, so the category was created before the channel.
-            Assert.True(string.CompareOrdinal(mirrorCategory.Id, mirrorChannel.Id) < 0,
-                $"Mirror Category {mirrorCategory.Id} should be created before Mirror Channel {mirrorChannel.Id}.");
+            Assert.True(string.CompareOrdinal(mirrorCategory.Name, mirrorChannel.Id) < 0,
+                $"Mirror Category {mirrorCategory.Name} should be created before Mirror Channel {mirrorChannel.Id}.");
         }
     }
 
@@ -82,7 +82,7 @@ public class PublicVoiceChannelMirrorTests
         var channelIdsBefore = before.TextChannels.Select(c => c.Id)
             .Concat(before.VoiceChannels.Select(c => c.Id))
             .ToHashSet();
-        var categoryIdsBefore = before.Categories.Select(c => c.Id).ToHashSet();
+        var categoryIdsBefore = before.Categories.Select(c => c.Name).ToHashSet();
 
         // Channels go first, so each category is empty when it is removed.
         var newChannelIds = after.TextChannels.Select(c => c.Id)
@@ -94,9 +94,9 @@ public class PublicVoiceChannelMirrorTests
             await stoatServer.DeleteChannelAsync(channelId);
         }
 
-        foreach (var category in after.Categories.Where(c => !categoryIdsBefore.Contains(c.Id)))
+        foreach (var category in after.Categories.Where(c => !categoryIdsBefore.Contains(c.Name)))
         {
-            await stoatServer.RemoveCategoryAsync(category.Id);
+            await stoatServer.RemoveCategoryAsync(category.Name);
         }
     }
 }

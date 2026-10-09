@@ -17,8 +17,8 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "General", true),
-                new DiscordCategory("222", "Gaming", true)),
+                new Category("111", "General", true),
+                new Category("222", "Gaming", true)),
             new FakeStoatRepository());
 
         Assert.Equal(
@@ -32,8 +32,8 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "Public", true),
-                new DiscordCategory("222", "Staff", false)),
+                new Category("111", "Public", true),
+                new Category("222", "Staff", false)),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateCategory("111", "Public [111]") }, result.Changes);
@@ -46,7 +46,7 @@ public class ReconcilerTests
     public async Task PrivateCategoryWithExistingMirror_IsStillSkipped()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("222", "Staff", false)),
+            new FakeDiscordRepository(new Category("222", "Staff", false)),
             new FakeStoatRepository(new StoatCategory("s1", "Staff [222]")));
 
         Assert.Empty(result.Changes);
@@ -58,7 +58,7 @@ public class ReconcilerTests
     {
         // The snapshot carries no channels at all; the category must be mirrored regardless.
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("333", "Empty", true)),
+            new FakeDiscordRepository(new Category("333", "Empty", true)),
             new FakeStoatRepository());
 
         Assert.Equal(new Change[] { new CreateCategory("333", "Empty [333]") }, result.Changes);
@@ -75,7 +75,7 @@ public class ReconcilerTests
     public async Task MirrorWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string stoatTitle)
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("111", "General", true)),
+            new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new StoatCategory("s1", stoatTitle)));
 
         Assert.Equal(new Change[] { new CreateCategory("111", "General [111]") }, result.Changes);
@@ -85,7 +85,7 @@ public class ReconcilerTests
     public async Task MirrorWithValidChannelLink_SuppressesCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("111", "General", true)),
+            new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new StoatCategory("s1", "General [111]")));
 
         Assert.Empty(result.Changes);
@@ -96,7 +96,7 @@ public class ReconcilerTests
     public async Task MirrorLinkMatchesOnIdNotName_SoRenamedMirrorSuppressesCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("111", "New Name", true)),
+            new FakeDiscordRepository(new Category("111", "New Name", true)),
             new FakeStoatRepository(new StoatCategory("s1", "Old Name [111]")));
 
         Assert.Empty(result.Changes);
@@ -106,7 +106,7 @@ public class ReconcilerTests
     public async Task MirrorForDifferentSourceId_DoesNotSuppressCreate()
     {
         var result = await ReconcileAsync(
-            new FakeDiscordRepository(new DiscordCategory("111", "General", true)),
+            new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new StoatCategory("s1", "General [999]")));
 
         Assert.Equal(new Change[] { new CreateCategory("111", "General [111]") }, result.Changes);
@@ -117,8 +117,8 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "A", true),
-                new DiscordCategory("222", "B", true)),
+                new Category("111", "A", true),
+                new Category("222", "B", true)),
             new FakeStoatRepository(new StoatCategory("s1", "A [111]")));
 
         Assert.Equal(new Change[] { new CreateCategory("222", "B [222]") }, result.Changes);
@@ -138,7 +138,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                [new DiscordCategory("111", "General", true)],
+                [new Category("111", "General", true)],
                 [new DiscordTextChannel("501", "chat", "111", true)]),
             new FakeStoatRepository());
 
@@ -196,7 +196,7 @@ public class ReconcilerTests
         // created for that Private Category, following the same naming rules as any public category.
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                [new DiscordCategory("222", "Staff", false)],
+                [new Category("222", "Staff", false)],
                 [new DiscordTextChannel("501", "chat", "222", true)]),
             new FakeStoatRepository());
 
@@ -212,7 +212,7 @@ public class ReconcilerTests
         // The Private Category is mirrored only when it holds at least one public channel.
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                [new DiscordCategory("222", "Staff", false)],
+                [new Category("222", "Staff", false)],
                 [new DiscordTextChannel("502", "secret", "222", false)]),
             new FakeStoatRepository());
 
@@ -279,7 +279,7 @@ public class ReconcilerTests
     {
         var result = await ReconcileAsync(
             new FakeDiscordRepository(
-                [new DiscordCategory("222", "Staff", false)],
+                [new Category("222", "Staff", false)],
                 [],
                 [new DiscordVoiceChannel("601", "lounge", "222", true)]),
             new FakeStoatRepository());

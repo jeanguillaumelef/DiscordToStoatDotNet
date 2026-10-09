@@ -1,3 +1,3 @@
 namespace Domain;
 
-public sealed record StoatCategory(string Id, string Title);
+public sealed record StoatCategory(string Name, string Title);

@@ -26,7 +26,7 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
         var categories = channels
             .OfType<RestCategoryChannel>()
             .OrderBy(c => c.Position)
-            .Select(c => new DiscordCategory(c.Id.ToString(), c.Name, EveryoneCanView(guild, c)))
+            .Select(c => new Category(c.Id.ToString(), c.Name, EveryoneCanView(guild, c)))
             .ToList();
 
         var textChannels = new List<DiscordTextChannel>();

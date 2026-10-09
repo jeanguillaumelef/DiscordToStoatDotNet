@@ -10,8 +10,8 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "General", true),
-                new DiscordCategory("222", "Gaming", true)),
+                new Category("111", "General", true),
+                new Category("222", "Gaming", true)),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -24,7 +24,7 @@ public class ReconcileRunnerTests
     {
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository(new DiscordCategory("111", "General", true)),
+            new FakeDiscordRepository(new Category("111", "General", true)),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -40,8 +40,8 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "Public", true),
-                new DiscordCategory("222", "Staff", false)),
+                new Category("111", "Public", true),
+                new Category("222", "Staff", false)),
             stoat);
 
         var result = await runner.RunAsync(CancellationToken.None);
@@ -56,8 +56,8 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository(new StoatCategory("s1", "A [111]"));
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                new DiscordCategory("111", "A", true),
-                new DiscordCategory("222", "B", true)),
+                new Category("111", "A", true),
+                new Category("222", "B", true)),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -71,7 +71,7 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                [new DiscordCategory("111", "General", true)],
+                [new Category("111", "General", true)],
                 [new DiscordTextChannel("501", "chat", "111", true)]),
             stoat);
 
@@ -80,7 +80,7 @@ public class ReconcileRunnerTests
         var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
         var mirrorCategory = Assert.Single(snapshot.Categories);
         var created = Assert.Single(stoat.CreatedTextChannels);
-        Assert.Equal(new CreatedTextChannel("chat", "501", mirrorCategory.Id), created);
+        Assert.Equal(new CreatedTextChannel("chat", "501", mirrorCategory.Name), created);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                [new DiscordCategory("111", "General", true)],
+                [new Category("111", "General", true)],
                 [new DiscordTextChannel("501", "chat", "111", true)]),
             stoat);
 
@@ -132,7 +132,7 @@ public class ReconcileRunnerTests
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
             new FakeDiscordRepository(
-                [new DiscordCategory("111", "General", true)],
+                [new Category("111", "General", true)],
                 [],
                 [new DiscordVoiceChannel("601", "lounge", "111", true)]),
             stoat);
@@ -142,7 +142,7 @@ public class ReconcileRunnerTests
         var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
         var mirrorCategory = Assert.Single(snapshot.Categories);
         var created = Assert.Single(stoat.CreatedVoiceChannels);
-        Assert.Equal(new CreatedVoiceChannel("lounge", "601", mirrorCategory.Id), created);
+        Assert.Equal(new CreatedVoiceChannel("lounge", "601", mirrorCategory.Name), created);
     }
 
     [Fact]
