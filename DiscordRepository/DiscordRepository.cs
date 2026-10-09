@@ -41,7 +41,7 @@ public sealed class DiscordRepository(DiscordRepositoryOptions options) : IDisco
                     textChannels.Add(new TextChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel), (channel as ITextChannel)?.Topic ?? string.Empty));
                     break;
                 case ChannelType.Voice:
-                    voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel), (channel as ITextChannel)?.Topic ?? string.Empty));
+                    voiceChannels.Add(new DiscordVoiceChannel(channel.Id.ToString(), channel.Name, ((INestedChannel)channel).CategoryId?.ToString(), EveryoneCanView(guild, channel)));
                     break;
                 default:
                     unsupportedChannels.Add(new DiscordUnsupportedChannel(channel.Id.ToString(), UnsupportedTypeName(channel.ChannelType)));

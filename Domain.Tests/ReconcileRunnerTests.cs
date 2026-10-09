@@ -134,7 +134,7 @@ public class ReconcileRunnerTests
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
                 [],
-                [new DiscordVoiceChannel("601", "lounge", "111", true, "")]),
+                [new DiscordVoiceChannel("601", "lounge", "111", true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -150,7 +150,7 @@ public class ReconcileRunnerTests
     {
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("602", "staff-voice", null, false, "")]),
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("602", "staff-voice", null, false)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
@@ -221,16 +221,16 @@ public class ReconcileRunnerTests
     }
 
     [Fact]
-    public async Task VoiceChannel_IsCreatedWithLinkThenChannelDescription()
+    public async Task VoiceChannel_IsCreatedWithBareIdAsDescription()
     {
         var stoat = new FakeStoatRepository();
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true, "Hang out")]),
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
 
-        Assert.Equal("601\nHang out", Assert.Single(stoat.CreatedVoiceChannels).Description);
+        Assert.Equal("601", Assert.Single(stoat.CreatedVoiceChannels).Description);
     }
 
     [Fact]
@@ -315,17 +315,17 @@ public class ReconcileRunnerTests
     }
 
     [Fact]
-    public async Task VoiceChannel_WhoseDescriptionDrifted_IsUpdatedWithDiscordChannelDescription()
+    public async Task VoiceChannel_WhoseDescriptionDrifted_IsResetToBareId()
     {
         var stoat = new FakeStoatRepository([], [], [new StoatVoiceChannel("v1", "lounge", "601\nold")]);
         var runner = new ReconcileRunner(
-            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true, "new")]),
+            new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true)]),
             stoat);
 
         await runner.RunAsync(CancellationToken.None);
         var second = await runner.RunAsync(CancellationToken.None);
 
-        Assert.Equal(new UpdatedDescription("v1", "601\nnew"), Assert.Single(stoat.DescriptionUpdates));
+        Assert.Equal(new UpdatedDescription("v1", "601"), Assert.Single(stoat.DescriptionUpdates));
         Assert.Empty(second.Changes);
     }
 }

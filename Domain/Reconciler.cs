@@ -89,7 +89,7 @@ public static class Reconciler
                 continue;
             }
 
-            var description = ComposeDescription(channel.Id, channel.Description, warnings);
+            var description = ChannelLink.ComposeChannelDescription(channel.Id, string.Empty).Text;
             if (mirrorVoiceChannels.TryGetValue(channel.Id, out var mirror))
             {
                 if (mirror.Description != description)

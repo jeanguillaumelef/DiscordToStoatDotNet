@@ -66,14 +66,8 @@ public class PublicVoiceChannelMirrorTests
 
             Assert.Contains(mirrorChannel.Id, await stoatServer.GetCategoryChannelIdsAsync(mirrorCategory.Id));
 
-            // A voice channel created without a Channel Description is mirrored with the bare Channel Link.
+            // Discord voice channels have no topic, so a voice Mirror Channel carries just the Channel Link.
             Assert.Equal(sourceChannel.Id.ToString(), mirrorChannel.Description);
-
-            // A Channel Description added on Discord overwrites the Mirror Channel's description at the next Reconcile.
-            await sourceChannel.ModifyAsync(properties => properties.Topic = "added topic");
-            await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
-            var edited = Assert.Single((await stoat.GetSnapshotAsync(CancellationToken.None)).VoiceChannels, c => c.Id == mirrorChannel.Id);
-            Assert.Equal($"{sourceChannel.Id}\nadded topic", edited.Description);
 
             // Stoat IDs are ULIDs, which sort by creation time, so the category was created before the channel.
             Assert.True(string.CompareOrdinal(mirrorCategory.Id, mirrorChannel.Id) < 0,

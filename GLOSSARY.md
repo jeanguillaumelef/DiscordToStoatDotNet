@@ -33,7 +33,7 @@ The Stoat category that corresponds to one Source Category.
 _Avoid_: Stoat group
 
 **Channel Description**:
-The free-text description of a Source Channel (Discord calls it the channel topic). The Bridge copies it onto the Mirror Channel's description, after the Channel Link line. Discord wins: Reconcile overwrites whatever a Stoat admin wrote there. If it does not fit the Stoat length limit it is truncated and the Bridge reports a warning; the Channel Link line is never cut.
+The free-text description of a text Source Channel (Discord calls it the channel topic; voice channels have none, so a voice Mirror Channel carries only the Channel Link). The Bridge copies it onto the Mirror Channel's description, after the Channel Link line. Discord wins: Reconcile overwrites whatever a Stoat admin wrote there. If it does not fit the Stoat length limit it is truncated and the Bridge reports a warning; the Channel Link line is never cut.
 _Avoid_: Topic (the Discord term; use Channel Description in the domain), Mirror description (that is the whole Stoat field, which also holds the Channel Link)
 
 **Channel Link**:
