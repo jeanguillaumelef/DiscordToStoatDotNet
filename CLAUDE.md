@@ -4,8 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-DiscordToStoat bridges Discord to [Stoat](https://stoat.chat) (the chat platform formerly
-known as Revolt). The long-term goal is to mirror/forward Discord activity into a Stoat server.
+DiscordToStoat migrate Discord content to [Stoat](https://stoat.chat).
 
 ## Stack
 
