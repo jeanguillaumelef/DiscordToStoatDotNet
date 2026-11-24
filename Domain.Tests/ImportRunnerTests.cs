@@ -53,7 +53,7 @@ public class ImportRunnerTests
     [Fact]
     public async Task ExistingMirrorCategories_AreNotRecreated()
     {
-        var stoat = new FakeStoatRepository(new Category("s1", "A [111]", true));
+        var stoat = new FakeStoatRepository(new StoatCategory("s1", "A [111]", []));
         var runner = new ImportRunner(
             new FakeDiscordRepository(
                 new Category("111", "A", true),
@@ -237,7 +237,7 @@ public class ImportRunnerTests
     public async Task PartlyImportedServer_GetsOnlyTheMissingMirrors()
     {
         var stoat = new FakeStoatRepository(
-            [new Category("s1", "General [111]", true)],
+            [new StoatCategory("s1", "General [111]", [])],
             [new StoatTextChannel("t1", "chat", "501")],
             [new StoatVoiceChannel("v1", "lounge", "601")]);
         var runner = new ImportRunner(
@@ -257,7 +257,7 @@ public class ImportRunnerTests
     [Fact]
     public async Task ChannelsWhoseCategoryWasImportedEarlier_GoIntoThatMirrorCategory()
     {
-        var stoat = new FakeStoatRepository(new Category("s1", "General [111]", true));
+        var stoat = new FakeStoatRepository(new StoatCategory("s1", "General [111]", []));
         var runner = new ImportRunner(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
@@ -290,5 +290,82 @@ public class ImportRunnerTests
         Assert.Single(stoat.CreatedCategoryTitles);
         Assert.Single(stoat.CreatedTextChannels);
         Assert.Single(stoat.CreatedVoiceChannels);
+    }
+
+    [Fact]
+    public async Task MirrorCategories_FollowDiscordCategoryOrder()
+    {
+        var stoat = new FakeStoatRepository(
+            new StoatCategory("s2", "Gaming [222]", []),
+            new StoatCategory("s1", "General [111]", []));
+        var runner = new ImportRunner(
+            new FakeDiscordRepository(
+                new Category("111", "General", true),
+                new Category("222", "Gaming", true)),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
+        Assert.Equal(new[] { "s1", "s2" }, snapshot.Categories.Select(c => c.Id));
+    }
+
+    [Fact]
+    public async Task MirrorChannels_FollowDiscordOrderWithinTheirCategory()
+    {
+        var stoat = new FakeStoatRepository(
+            [new StoatCategory("s1", "General [111]", ["v1", "t2", "t1"])],
+            [new StoatTextChannel("t1", "chat", "501"), new StoatTextChannel("t2", "news", "502")],
+            [new StoatVoiceChannel("v1", "lounge", "601")]);
+        var runner = new ImportRunner(
+            new FakeDiscordRepository(
+                [new Category("111", "General", true)],
+                [new TextChannel("501", "chat", "111", true, ""), new TextChannel("502", "news", "111", true, "")],
+                [new DiscordVoiceChannel("601", "lounge", "111", true)]),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
+        Assert.Equal(new[] { "t1", "t2", "v1" }, Assert.Single(snapshot.Categories).ChannelIds);
+    }
+
+    [Fact]
+    public async Task ResumedImport_EndsWithNewAndEarlierMirrorsInDiscordOrder()
+    {
+        var stoat = new FakeStoatRepository(
+            [new StoatCategory("s1", "General [111]", ["t1"])],
+            [new StoatTextChannel("t1", "news", "502")]);
+        var runner = new ImportRunner(
+            new FakeDiscordRepository(
+                [new Category("000", "Welcome", true), new Category("111", "General", true)],
+                [new TextChannel("501", "chat", "111", true, ""), new TextChannel("502", "news", "111", true, "")]),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        var snapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
+        Assert.Equal(new[] { "Welcome [000]", "General [111]" }, snapshot.Categories.Select(c => c.Name));
+        var chat = Assert.Single(snapshot.TextChannels, c => c.Name == "chat");
+        Assert.Equal(new[] { chat.Id, "t1" }, snapshot.Categories[1].ChannelIds);
+    }
+
+    [Fact]
+    public async Task MirrorsAlreadyInDiscordOrder_AreNotReordered()
+    {
+        var stoat = new FakeStoatRepository(
+            [new StoatCategory("s1", "General [111]", ["t1", "v1"]), new StoatCategory("s2", "Gaming [222]", [])],
+            [new StoatTextChannel("t1", "chat", "501")],
+            [new StoatVoiceChannel("v1", "lounge", "601")]);
+        var runner = new ImportRunner(
+            new FakeDiscordRepository(
+                [new Category("111", "General", true), new Category("222", "Gaming", true)],
+                [new TextChannel("501", "chat", "111", true, "")],
+                [new DiscordVoiceChannel("601", "lounge", "111", true)]),
+            stoat);
+
+        await runner.RunAsync(CancellationToken.None);
+
+        Assert.Equal(0, stoat.SetCategoryOrderCallCount);
     }
 }
