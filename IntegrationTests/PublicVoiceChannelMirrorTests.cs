@@ -10,7 +10,7 @@ namespace IntegrationTests;
 public class PublicVoiceChannelMirrorTests
 {
     [Fact]
-    public async Task Reconcile_MirrorsPublicVoiceChannelUnderItsCategory_CategoryFirst()
+    public async Task Import_MirrorsPublicVoiceChannelUnderItsCategory_CategoryFirst()
     {
         var settings = IntegrationSettings.Load(new ConfigurationBuilder()
             .AddUserSecrets<PublicVoiceChannelMirrorTests>(optional: true)
@@ -55,7 +55,7 @@ public class PublicVoiceChannelMirrorTests
             var before = await stoat.GetSnapshotAsync(CancellationToken.None);
             ledger.Add("Stoat resources created by the run", () => DeleteStoatResourcesCreatedSinceAsync(stoat, stoatServer, before));
 
-            await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
+            await new ImportRunner(discord, stoat).RunAsync(CancellationToken.None);
 
             var after = await stoat.GetSnapshotAsync(CancellationToken.None);
 

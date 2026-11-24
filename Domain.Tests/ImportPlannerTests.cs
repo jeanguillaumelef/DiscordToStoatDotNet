@@ -2,20 +2,20 @@ using Domain;
 
 namespace Domain.Tests;
 
-public class ReconcilerTests
+public class ImportPlannerTests
 {
-    private static async Task<ReconcileResult> ReconcileAsync(
+    private static async Task<ImportResult> PlanAsync(
         FakeDiscordRepository discord, FakeStoatRepository stoat)
     {
         var discordSnapshot = await discord.GetSnapshotAsync(CancellationToken.None);
         var stoatSnapshot = await stoat.GetSnapshotAsync(CancellationToken.None);
-        return Reconciler.Reconcile(discordSnapshot, stoatSnapshot);
+        return ImportPlanner.Plan(discordSnapshot, stoatSnapshot);
     }
 
     [Fact]
     public async Task PublicCategoriesWithoutMirror_ProduceCreateChangePerCategory()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 new Category("111", "General", true),
                 new Category("222", "Gaming", true)),
@@ -30,7 +30,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PrivateCategory_ProducesNoCreateAndIsSkipped()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 new Category("111", "Public", true),
                 new Category("222", "Staff", false)),
@@ -45,7 +45,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PrivateCategoryWithExistingMirror_IsStillSkipped()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("222", "Staff", false)),
             new FakeStoatRepository(new Category("s1", "Staff [222]", true)));
 
@@ -57,7 +57,7 @@ public class ReconcilerTests
     public async Task EmptyPublicCategory_IsStillMirrored()
     {
         // The snapshot carries no channels at all; the category must be mirrored regardless.
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("333", "Empty", true)),
             new FakeStoatRepository());
 
@@ -74,7 +74,7 @@ public class ReconcilerTests
     [InlineData("General 111")]
     public async Task MirrorWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string stoatTitle)
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new Category("s1", stoatTitle, true)));
 
@@ -84,7 +84,7 @@ public class ReconcilerTests
     [Fact]
     public async Task MirrorWithValidChannelLink_SuppressesCreate()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new Category("s1", "General [111]", true)));
 
@@ -95,7 +95,7 @@ public class ReconcilerTests
     [Fact]
     public async Task MirrorLinkMatchesOnIdNotName_SoRenamedMirrorSuppressesCreate()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("111", "New Name", true)),
             new FakeStoatRepository(new Category("s1", "Old Name [111]", true)));
 
@@ -105,7 +105,7 @@ public class ReconcilerTests
     [Fact]
     public async Task MirrorForDifferentSourceId_DoesNotSuppressCreate()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(new Category("111", "General", true)),
             new FakeStoatRepository(new Category("s1", "General [999]", true)));
 
@@ -115,7 +115,7 @@ public class ReconcilerTests
     [Fact]
     public async Task OnlyMissingMirrorsAreCreated_WhenSomeAlreadyExist()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 new Category("111", "A", true),
                 new Category("222", "B", true)),
@@ -127,7 +127,7 @@ public class ReconcilerTests
     [Fact]
     public async Task NoCategories_ProducesNothing()
     {
-        var result = await ReconcileAsync(new FakeDiscordRepository(), new FakeStoatRepository());
+        var result = await PlanAsync(new FakeDiscordRepository(), new FakeStoatRepository());
 
         Assert.Empty(result.Changes);
         Assert.Empty(result.Skipped);
@@ -136,7 +136,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PublicTextChannelInMirroredCategory_ProducesCreateChannelWithLinkAsDescription()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [new Category("111", "General", true)],
                 [new TextChannel("501", "chat", "111", true, "")]),
@@ -150,7 +150,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PrivateTextChannel_ProducesNoCreateAndIsSkipped()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [],
                 [new TextChannel("501", "chat", null, true, ""), new TextChannel("502", "staff", null, false, "")]),
@@ -165,12 +165,28 @@ public class ReconcilerTests
     [Fact]
     public async Task TextChannelWithValidMirrorChannel_ProducesNoCreate()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true, "Some topic")]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", "501\nSome topic")]));
 
         Assert.Empty(result.Changes);
         Assert.Empty(result.Skipped);
+    }
+
+    [Fact]
+    public async Task ExistingMirrorChannelsWithDifferentDescriptions_AreLeftUnchanged()
+    {
+        var result = await PlanAsync(
+            new FakeDiscordRepository(
+                [],
+                [new TextChannel("501", "chat", null, true, "new topic")],
+                [new DiscordVoiceChannel("601", "lounge", null, true)]),
+            new FakeStoatRepository(
+                [],
+                [new StoatTextChannel("s1", "chat", "501\nedited on Stoat")],
+                [new StoatVoiceChannel("v1", "lounge", "601\nedited on Stoat")]));
+
+        Assert.Empty(result.Changes);
     }
 
     [Theory]
@@ -182,7 +198,7 @@ public class ReconcilerTests
     [InlineData("502")]
     public async Task MirrorChannelWithoutValidChannelLink_IsIgnoredAndCreateStillProduced(string description)
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository([], [new TextChannel("501", "chat", null, true, "")]),
             new FakeStoatRepository([], [new StoatTextChannel("s1", "chat", description)]));
 
@@ -194,7 +210,7 @@ public class ReconcilerTests
     {
         // Issue #12: a public channel under a Private Category is placed in a Mirror Category
         // created for that Private Category, following the same naming rules as any public category.
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
                 [new TextChannel("501", "chat", "222", true, "")]),
@@ -210,7 +226,7 @@ public class ReconcilerTests
     public async Task PrivateCategoryWithOnlyPrivateChannels_IsNotMirroredAndIsSkipped()
     {
         // The Private Category is mirrored only when it holds at least one public channel.
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
                 [new TextChannel("502", "secret", "222", false, "")]),
@@ -223,7 +239,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PublicVoiceChannelWithoutMirror_ProducesCreateVoiceChannelChange()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [],
                 [],
@@ -237,7 +253,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PrivateVoiceChannel_ProducesNoCreateAndIsSkipped()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [],
                 [],
@@ -253,7 +269,7 @@ public class ReconcilerTests
     [Fact]
     public async Task VoiceChannelWithValidMirrorChannel_ProducesNoCreate()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, true)]),
             new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601")]));
 
@@ -264,7 +280,7 @@ public class ReconcilerTests
     [Fact]
     public async Task UnsupportedChannel_ProducesNoCreateAndIsSkipped()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository([], [], [], [new DiscordUnsupportedChannel("701", "forum")]),
             new FakeStoatRepository());
 
@@ -277,7 +293,7 @@ public class ReconcilerTests
     [Fact]
     public async Task PublicVoiceChannelInPrivateCategory_MirrorsThePrivateCategoryAndPlacesChannelUnderIt()
     {
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository(
                 [new Category("222", "Staff", false)],
                 [],
@@ -294,7 +310,7 @@ public class ReconcilerTests
     public async Task VoiceChannelThatBecamePrivateAfterMirroring_KeepsExistingMirrorUntouched()
     {
         // Issue #5: a channel that turns private keeps its existing Mirror Channel unchanged.
-        var result = await ReconcileAsync(
+        var result = await PlanAsync(
             new FakeDiscordRepository([], [], [new DiscordVoiceChannel("601", "lounge", null, false)]),
             new FakeStoatRepository([], [], [new StoatVoiceChannel("s1", "lounge", "601")]));
 

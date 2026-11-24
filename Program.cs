@@ -22,7 +22,7 @@ var stoatOptions = new StoatRepositoryOptions(
 await using var discord = new DiscordRepository.DiscordRepository(discordOptions);
 var stoat = new StoatRepository.StoatRepository(stoatOptions);
 
-var result = await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
+var result = await new ImportRunner(discord, stoat).RunAsync(CancellationToken.None);
 
 foreach (var skipped in result.Skipped)
 {
@@ -34,7 +34,7 @@ foreach (var warning in result.Warnings)
     Console.WriteLine($"Warning {warning.SourceId}: {warning.Message}");
 }
 
-Console.WriteLine($"Reconcile done: {result.Changes.Count} change(s) applied, {result.Skipped.Count} skipped, {result.Warnings.Count} warning(s).");
+Console.WriteLine($"Import done: {result.Changes.Count} change(s) applied, {result.Skipped.Count} skipped, {result.Warnings.Count} warning(s).");
 
 static string Require(IConfiguration configuration, string key) =>
     configuration[key] is { Length: > 0 } value

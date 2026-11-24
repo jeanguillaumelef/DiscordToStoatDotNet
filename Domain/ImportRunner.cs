@@ -1,14 +1,14 @@
 namespace Domain;
 
-/// <summary>Orchestrates one Reconcile: reads both snapshots through the ports, asks Reconciler for the changes, and applies them to Stoat in order (categories before channels).</summary>
-public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository stoat)
+/// <summary>Orchestrates one Import: reads both snapshots through the ports, asks ImportPlanner for the changes, and applies them to Stoat in order (categories before channels).</summary>
+public sealed class ImportRunner(IDiscordRepository discord, IStoatRepository stoat)
 {
-    public async Task<ReconcileResult> RunAsync(CancellationToken cancellationToken)
+    public async Task<ImportResult> RunAsync(CancellationToken cancellationToken)
     {
         var discordSnapshot = await discord.GetSnapshotAsync(cancellationToken);
         var stoatSnapshot = await stoat.GetSnapshotAsync(cancellationToken);
 
-        var result = Reconciler.Reconcile(discordSnapshot, stoatSnapshot);
+        var result = ImportPlanner.Plan(discordSnapshot, stoatSnapshot);
 
         Dictionary<string, string>? mirrorCategoryIds = null;
 
@@ -27,9 +27,6 @@ public sealed class ReconcileRunner(IDiscordRepository discord, IStoatRepository
                 case CreateVoiceChannel create:
                     mirrorCategoryIds ??= await GetMirrorCategoryIdsAsync(cancellationToken);
                     await stoat.CreateVoiceChannelAsync(create.Name, create.Description, MirrorCategoryId(create.SourceCategoryId, mirrorCategoryIds), cancellationToken);
-                    break;
-                case UpdateChannelDescription update:
-                    await stoat.SetChannelDescriptionAsync(update.StoatChannelId, update.Description, cancellationToken);
                     break;
                 default:
                     throw new InvalidOperationException($"Unhandled change type {change.GetType().Name}");

@@ -10,7 +10,7 @@ namespace IntegrationTests;
 public class PublicChannelMirrorTests
 {
     [Fact]
-    public async Task Reconcile_MirrorsPublicChannelUnderItsCategory_CategoryFirst()
+    public async Task Import_MirrorsPublicChannelUnderItsCategory_CategoryFirst()
     {
         var settings = IntegrationSettings.Load(new ConfigurationBuilder()
             .AddUserSecrets<PublicChannelMirrorTests>(optional: true)
@@ -55,7 +55,7 @@ public class PublicChannelMirrorTests
             var before = await stoat.GetSnapshotAsync(CancellationToken.None);
             ledger.Add("Stoat resources created by the run", () => DeleteStoatResourcesCreatedSinceAsync(stoat, stoatServer, before));
 
-            await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
+            await new ImportRunner(discord, stoat).RunAsync(CancellationToken.None);
 
             var after = await stoat.GetSnapshotAsync(CancellationToken.None);
 
@@ -69,11 +69,13 @@ public class PublicChannelMirrorTests
             // The Channel Description is written after the Channel Link, and "\n" must round-trip through Stoat unchanged.
             Assert.Equal($"{sourceChannel.Id}\nchat topic", mirrorChannel.Description);
 
-            // A Channel Description edited on Discord overwrites the Mirror Channel's description at the next Reconcile.
+            // An Import is create-only (ADR 0004): a Channel Description edited on Discord leaves the existing Mirror unchanged.
             await sourceChannel.ModifyAsync(properties => properties.Topic = "edited topic");
-            await new ReconcileRunner(discord, stoat).RunAsync(CancellationToken.None);
-            var edited = Assert.Single((await stoat.GetSnapshotAsync(CancellationToken.None)).TextChannels, c => c.Id == mirrorChannel.Id);
-            Assert.Equal($"{sourceChannel.Id}\nedited topic", edited.Description);
+            await new ImportRunner(discord, stoat).RunAsync(CancellationToken.None);
+            var second = await stoat.GetSnapshotAsync(CancellationToken.None);
+            var unchanged = Assert.Single(second.TextChannels,
+                c => ChannelLink.SourceIdFromChannelDescription(c.Description) == sourceChannel.Id.ToString());
+            Assert.Equal(mirrorChannel, unchanged);
 
             // Stoat IDs are ULIDs, which sort by creation time, so the category was created before the channel.
             Assert.True(string.CompareOrdinal(mirrorCategory.Id, mirrorChannel.Id) < 0,
