@@ -13,18 +13,7 @@ public static class ImportPlanner
         var importedTextChannelIds = ImportedChannelIds(stoat.TextChannels.Select(c => c.Description));
         var importedVoiceChannelIds = ImportedChannelIds(stoat.VoiceChannels.Select(c => c.Description));
 
-        // A Private Category is mirrored only when it holds at least one public channel (issue #12),
-        // so those public channels can stay grouped under a Mirror Category.
-        var categoryIdsHoldingPublicChannel = discord.TextChannels
-            .Where(c => c.EveryoneCanView && c.CategoryId is not null)
-            .Select(c => c.CategoryId!)
-            .Concat(discord.VoiceChannels.Where(c => c.EveryoneCanView && c.CategoryId is not null).Select(c => c.CategoryId!))
-            .ToHashSet();
-
-        var mirroredCategoryIds = discord.Categories
-            .Where(c => c.EveryoneCanView || categoryIdsHoldingPublicChannel.Contains(c.Id))
-            .Select(c => c.Id)
-            .ToHashSet();
+        var mirroredCategoryIds = MirroredCategories.Ids(discord);
 
         var changes = new List<Change>();
         var skipped = new List<SkippedItem>();

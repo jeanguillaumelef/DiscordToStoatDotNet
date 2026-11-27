@@ -15,7 +15,7 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
 
         var categories = server.Categories
             .OrderBy(c => c.Position)
-            .Select(c => new Category(c.Id, c.Name, true)) // Stoat does not support per-category permissions, so assume everyone can view.
+            .Select(c => new StoatCategory(c.Id, c.Name, [.. c.ChannelIds ?? []]))
             .ToList();
 
         // Server.TextChannels reads the websocket cache, which is null in ClientMode.Http, so
@@ -65,6 +65,30 @@ public sealed class StoatRepository(StoatRepositoryOptions options) : IStoatRepo
         var server = await GetServerAsync(cancellationToken);
         var channel = await server.CreateVoiceChannelAsync(name, description);
         await PlaceInCategoryAsync(server, channel.Id, categoryId);
+    }
+
+    public async Task SetCategoryOrderAsync(IReadOnlyList<CategoryOrder> categories, CancellationToken cancellationToken)
+    {
+        var server = await GetServerAsync(cancellationToken);
+        var titles = server.Categories.ToDictionary(c => c.Id, c => c.Name);
+
+        // Stoat stores a server's categories as one ordered list, each holding its channels in order,
+        // and a PATCH replaces that list whole, so send every category with its title.
+        var request = new ServerCategoriesRequest
+        {
+            Categories = [.. categories.Select(c => new ServerCategoryJson
+            {
+                Id = c.CategoryId,
+                Title = titles.TryGetValue(c.CategoryId, out var title)
+                    ? title
+                    : throw new InvalidOperationException($"Stoat category {c.CategoryId} was not found."),
+                Channels = [.. c.ChannelIds],
+            })],
+        };
+
+        cancellationToken.ThrowIfCancellationRequested();
+        using var response = await _client.Rest.SendRequestAsync(RequestType.Patch, $"/servers/{options.ServerId}", request);
+        response.EnsureSuccessStatusCode();
     }
 
     private async Task PlaceInCategoryAsync(Server server, string channelId, string? categoryId)

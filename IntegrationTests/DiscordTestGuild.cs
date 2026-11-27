@@ -3,7 +3,7 @@ using Discord.Rest;
 
 namespace IntegrationTests;
 
-/// <summary>Creates and deletes channels in the test guild with Discord.Net directly. DiscordRepository only reads, so the tests need their own write path.</summary>
+/// <summary>Creates, reorders and deletes channels in the test guild with Discord.Net directly. DiscordRepository only reads, so the tests need their own write path.</summary>
 public sealed class DiscordTestGuild(string botToken, ulong guildId) : IAsyncDisposable
 {
     private readonly DiscordRestClient _client = new();
@@ -32,6 +32,18 @@ public sealed class DiscordTestGuild(string botToken, ulong guildId) : IAsyncDis
         {
             properties.CategoryId = categoryId;
         });
+    }
+
+    /// <summary>Swaps the positions of two channels (or two categories) in the guild.</summary>
+    public async Task SwapPositionsAsync(RestGuildChannel first, RestGuildChannel second)
+    {
+        var guild = await GetGuildAsync();
+        var current = (await guild.GetChannelsAsync()).ToDictionary(c => c.Id);
+        await guild.ReorderChannelsAsync(
+        [
+            new ReorderChannelProperties(first.Id, current[second.Id].Position),
+            new ReorderChannelProperties(second.Id, current[first.Id].Position),
+        ]);
     }
 
     public async ValueTask DisposeAsync()

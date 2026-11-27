@@ -1,6 +1,6 @@
 namespace Domain;
 
-/// <summary>Orchestrates one Import: reads both snapshots through the ports, asks ImportPlanner for the changes, and applies them to Stoat in order (categories before channels).</summary>
+/// <summary>Orchestrates one Import: reads both snapshots through the ports, asks ImportPlanner for the changes, applies them to Stoat in order (categories before channels), then puts every Mirror in Discord's order.</summary>
 public sealed class ImportRunner(IDiscordRepository discord, IStoatRepository stoat)
 {
     public async Task<ImportResult> RunAsync(CancellationToken cancellationToken)
@@ -33,8 +33,20 @@ public sealed class ImportRunner(IDiscordRepository discord, IStoatRepository st
             }
         }
 
+        // Last step: put every Mirror, including those from earlier runs, in Discord's order.
+        var current = await stoat.GetSnapshotAsync(cancellationToken);
+        var order = MirrorOrderPlanner.Plan(discordSnapshot, current);
+        if (!IsCurrentOrder(order, current))
+        {
+            await stoat.SetCategoryOrderAsync(order, cancellationToken);
+        }
+
         return result;
     }
+
+    private static bool IsCurrentOrder(IReadOnlyList<CategoryOrder> order, StoatSnapshot current) =>
+        order.Select(o => o.CategoryId).SequenceEqual(current.Categories.Select(c => c.Id))
+        && order.Zip(current.Categories).All(pair => pair.First.ChannelIds.SequenceEqual(pair.Second.ChannelIds));
 
     private static string? MirrorCategoryId(string? sourceCategoryId, Dictionary<string, string> mirrorCategoryIds) =>
         sourceCategoryId is { } id && mirrorCategoryIds.TryGetValue(id, out var mirrorCategoryId) ? mirrorCategoryId : null;
